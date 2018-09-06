@@ -7,6 +7,7 @@
                 pouziva se pri ladeni, kdy nechces spustit cele statistiky,
                 ale jen urcitou cast
         -v 	    verbose vystup
+        -q      vypis na zaver seznam sql dotazu do grafany
 """
 
 from func import *
@@ -33,7 +34,8 @@ PIRATI_KS = {
     }
 
 # Syntax one-liners
-def arg(argumentName):	return getArg(argumentName,"tv")
+def arg(argumentName):
+    return getArg(argumentName,"tvq")
 
 ##############################################################################################################
 # FUNKCE
@@ -104,7 +106,7 @@ def main():
     
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
-    pass
+    pass   
 
 if __name__ == '__main__': 
     dbx = clsMySql(credentials.FREEDB, verbose=arg('v'))
@@ -112,5 +114,11 @@ if __name__ == '__main__':
         test()
     else:	
         main()
+        
+    if arg('q'):
+        print()
+        for statid in statList:
+            print("SELECT $__time(date_start), value as %s FROM statistics WHERE id='%s'" % (statid, statid))
+            
     dbx.close()
 

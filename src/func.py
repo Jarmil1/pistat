@@ -6,6 +6,7 @@ import random, re, getopt, sys
 import urllib.request
 import mysql.connector
 
+statList = []   # zde ukladej seznam vsech vygenerovanych statistik
 
 class clsMySql:
 	""" wrapper mysql databaze """
@@ -63,26 +64,28 @@ class clsMySql:
 
 
 class clsMyStat:
-	''' Trida pro ukladani statistik do databaze '''
+    ''' Trida pro ukladani statistik do databaze '''
 
-	def __init__(self, database, stat_id):
-		self.database = database
-		self.stat_id = stat_id
-		self.tablename = 'statistics'
+    def __init__(self, database, stat_id):
+        global statList
+        statList.append(stat_id)
+        self.database = database
+        self.stat_id = stat_id
+        self.tablename = 'statistics'
 
-	def printLastValues(self,count):
-		""" Vytiskne nejnovejsich count polozek statistiky """
-		print("Poslednich %s hodnot ve statistice %s:" % (count,self.stat_id))
-		r = self.database.fetchall("SELECT date_start,value FROM %s WHERE (id='%s') ORDER BY date_start DESC LIMIT 0,%s" % (self.tablename,self.stat_id,count) )
-		for row in r:
-			print("%s:\t%s" % (row[0],row[1]))
-		
-	def addStat(self,value,datediff):
-		"""Prida jednu polozku statistiky pod udane datum. Pokud uz existuje, prepise ji
-			datediff    .. vzdalenost data od dnesniho, napr. 1=vcera, 2=predevcirem atd
-			"""
-		self.database.execute("INSERT IGNORE INTO %s (id,date_start,value) VALUES('%s',DATE_SUB(DATE(NOW()),INTERVAL %s DAY),%s);" % (self.tablename,self.stat_id,datediff,value))
-		self.database.execute("UPDATE %s SET value=%d WHERE (id='%s') AND (date_start=DATE_SUB(DATE(NOW()),INTERVAL %s DAY));" % (self.tablename,float(value), self.stat_id,datediff))
+    def printLastValues(self,count):
+        """ Vytiskne nejnovejsich count polozek statistiky """
+        print("Poslednich %s hodnot ve statistice %s:" % (count,self.stat_id))
+        r = self.database.fetchall("SELECT date_start,value FROM %s WHERE (id='%s') ORDER BY date_start DESC LIMIT 0,%s" % (self.tablename,self.stat_id,count) )
+        for row in r:
+            print("%s:\t%s" % (row[0],row[1]))
+        
+    def addStat(self,value,datediff):
+        """Prida jednu polozku statistiky pod udane datum. Pokud uz existuje, prepise ji
+            datediff    .. vzdalenost data od dnesniho, napr. 1=vcera, 2=predevcirem atd
+            """
+        self.database.execute("INSERT IGNORE INTO %s (id,date_start,value) VALUES('%s',DATE_SUB(DATE(NOW()),INTERVAL %s DAY),%s);" % (self.tablename,self.stat_id,datediff,value))
+        self.database.execute("UPDATE %s SET value=%d WHERE (id='%s') AND (date_start=DATE_SUB(DATE(NOW()),INTERVAL %s DAY));" % (self.tablename,float(value), self.stat_id,datediff))
 
 
 def Stat(dbx,statname,value,datediff,friendlyName=""):
