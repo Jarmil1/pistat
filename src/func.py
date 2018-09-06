@@ -111,7 +111,7 @@ def getLines(url,verbose=False):
 	except:
 		return None
 
-def grep(list_of_strings,regexp):
+def grep(regexp,list_of_strings):
 	''' returns list_of_strings filtered for lines matching regepx '''
 	rc = re.compile(regexp)		
 	return list(filter(rc.search, list_of_strings))
