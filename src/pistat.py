@@ -42,7 +42,7 @@ def arg(argumentName):
 ##############################################################################################################
 
 def statFioBalance(account):	
-    """ Statistika zustatku na uctu. 
+    """ Statistika zustatku na uctu, vraci zjistenou hodnotu nebo 0 
         HACK: z HTML vypisu hleda sesty radek se suffixem CZK
         Uklada jen nezaporny zustatek (simple test proti pitomostem)
     """	
@@ -53,7 +53,9 @@ def statFioBalance(account):
         balance = float(re.sub(regexp,"",line).replace(",",".").replace(chr(160),"") )
         if balance>=0:
             Stat(dbx, "BALANCE_%s" % account, balance, 0, "Stav uctu %s" % account)		
-
+            return balance
+    return 0       
+            
             
 def statNrOfMembers(id, url):
     """ Statistika poctu clenu krajsekho sdruzeni, zjistuje se z piratskeho fora,
@@ -93,9 +95,11 @@ def main():
     content = getUrlContent("https://wiki.pirati.cz/fo/seznam_uctu")
     if content:
         fioAccounts = list(set(re.findall(r'[0-9]{6,15}[ \t]*/[ \t]*2010', content)))
+        sum = 0
         for account in fioAccounts:
             account = account.split("/")[0].strip()
-            statFioBalance(account)
+            sum += statFioBalance(account)
+        Stat(dbx, "BALANCE_FIO_TOTAL", sum, 0, 'Celkovy stav vsech FIO transparentnich uctu')
 
     # Pocty clenu v jednotlivych KS a celkem ve strane (prosty soucet dilcich)		
     sum = 0
