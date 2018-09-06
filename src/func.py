@@ -102,19 +102,26 @@ def PrintLastValues(dbx,statname,count):
 	st.printLastValues(count)
 
 	
-def getLines(url,verbose=False):
-	''' Vraci obsah url jako seznam radku, nebo None pri neuspechu '''	
-	if verbose: print("Opening %s" % url)
-	try:
-		with urllib.request.urlopen(url) as f:
-			return f.read().decode('utf-8').split("\n")
-	except:
-		return None
+def getUrlContent(url,verbose=False):
+    ''' Vraci obsah url jako retezec prevedeny na utf-8, nebo None pri neuspechu '''	
+    if verbose: print("Opening %s" % url)
+    try:
+        with urllib.request.urlopen(url) as f:
+            return f.read().decode('utf-8')
+    except:
+        return None
 
+        
+def getLines(url,verbose=False):
+    ''' Vraci obsah url jako seznam radku, nebo None pri neuspechu '''	
+    cont = getUrlContent(url, verbose)
+    return cont.split("\n") if cont else None
+
+    
 def grep(regexp,list_of_strings):
-	''' returns list_of_strings filtered for lines matching regepx '''
-	rc = re.compile(regexp)		
-	return list(filter(rc.search, list_of_strings))
+    ''' returns list_of_strings filtered for lines matching regepx '''
+    rc = re.compile(regexp)		
+    return list(filter(rc.search, list_of_strings))
 
 	
 def getArg(argumentName,allowedArguments):

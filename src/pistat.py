@@ -87,9 +87,13 @@ def main():
     if lines:
         Stat(dbx, "PAYROLL_COUNT", len(grep(r'[0-9]+,[0-9]+',lines)), 0, 'Pocet lidi placenych piraty')	
 
-    # Zustatky na transparentnich FIO uctech
-    for account in ( "2100643125", "2100048174", "2901172853", "2400643143", "2100643205", "2400643151", "2700643161" ):
-        statFioBalance(account)
+    # Zustatky na vsech transparentnich FIO uctech uvedenych na wiki FO
+    content = getUrlContent("https://wiki.pirati.cz/fo/seznam_uctu")
+    if content:
+        fioAccounts = list(set(re.findall(r'[0-9]{6,15}[ \t]*/[ \t]*2010', content)))
+        for account in fioAccounts:
+            account = account.split("/")[0].strip()
+            statFioBalance(account)
 
     # Pocty clenu v jednotlivych KS a celkem ve strane (prosty soucet dilcich)		
     sum = 0
@@ -101,7 +105,6 @@ def main():
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
     pass
-
 
 if __name__ == '__main__': 
     dbx = clsMySql(credentials.FREEDB, verbose=arg('v'))
