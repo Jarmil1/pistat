@@ -8,6 +8,9 @@
                 ale jen urcitou cast
         -v 	    verbose vystup
         -q      vypis na zaver seznam sql dotazu do grafany
+        -sName  uloz stup do statistiky Name a skonci. 
+                Vstupem je celociselna hodnota na stdin. Priklad:
+                    cat somefile | wc -l | pistat.py -sSTAT_SOMEFILE_LINES
 """
 
 from func import *
@@ -32,10 +35,10 @@ PIRATI_KS = {
     "PI_MEMBERS_JIHOCESKY": "https://forum.pirati.cz/memberlist.php?mode=group&g=40",
     "PI_MEMBERS_NEZARAZENI": "https://forum.pirati.cz/memberlist.php?mode=group&g=437"
     }
-
+	
 # Syntax one-liners
 def arg(argumentName):
-    return getArg(argumentName,"tvq")
+    return getArg(argumentName,"tvqs:")
 
 ##############################################################################################################
 # FUNKCE
@@ -111,12 +114,25 @@ def main():
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
     pass   
+    
+def message_and_exit(message):    
+    print(message)
+    print(__doc__)
+    exit()
 
 if __name__ == '__main__': 
     dbx = clsMySql(credentials.FREEDB, verbose=arg('v'))
+
     if arg('t'):
         test()
-    else:	
+    elif arg('s'):
+        try:
+            value = int(sys.stdin.read().strip())
+        except ValueError:
+            message_and_exit("ERROR: expected number on stdio")
+        if value:
+            Stat(dbx, arg('s'), value, 0, '')
+    else:
         main()
         
     if arg('q'):
