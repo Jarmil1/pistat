@@ -106,11 +106,11 @@ def Stat(dbx,statname,value,datediff,friendlyName=""):
 
 		
 def PrintLastValues(dbx,statname,count):
-	""" wrapper pro clsMyStat.printLastValues """
-	st = clsMyStat(dbx,statname)
-	st.printLastValues(count)
+    """ wrapper pro clsMyStat.printLastValues """
+    st = clsMyStat(dbx,statname)
+    st.printLastValues(count)
 
-	
+
 def getUrlContent(url,verbose=False):
     ''' Vraci obsah url jako retezec prevedeny na utf-8, nebo None pri neuspechu '''	
     if verbose: print("Opening %s" % url)
