@@ -23,7 +23,7 @@ def make_graph( dbx, stat_id, filename=""):
         Y.append(row[1])
 
     # create graph
-    figure(num=None, figsize=(20, 12), dpi=80, facecolor='w', edgecolor='w')
+    figure(num=None, figsize=(16, 10), dpi=80, facecolor='w', edgecolor='w')
     ax = plt.axes()
     plt.plot(X, Y, 'k-', linewidth=3.0) 
     ax.xaxis.set_major_locator(plt.MaxNLocator(10))
