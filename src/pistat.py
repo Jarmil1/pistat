@@ -3,6 +3,7 @@
 """ Vytvari piratske statistiky z nedatabazovych zdroju, napr. CSV
     a uklada je do MySQL databaze, z niz mohou byt nacteny napr. Grafanou
     Parametry:
+        -h      help: vypise tuto napovedu
         -t      spusti jen testovaci cast kodu ve funkci test()
                 pouziva se pri ladeni, kdy nechces spustit cele statistiky,
                 ale jen urcitou cast
@@ -39,7 +40,7 @@ PIRATI_KS = {
 	
 # Syntax one-liners
 def arg(argumentName):
-    return getArg(argumentName,"tvqs:p:")
+    return getArg(argumentName,"tvqs:p:h")
 
 ##############################################################################################################
 # FUNKCE
@@ -81,6 +82,13 @@ def statNrOfMembers(id, url):
     return count
 
     
+def message_and_exit(message=""):    
+    if message:
+        print(message)
+    print(__doc__)
+    exit()
+
+
 ##############################################################################################################
 # KOD
 ##############################################################################################################
@@ -116,16 +124,15 @@ def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
     pass   
     
-def message_and_exit(message):    
-    print(message)
-    print(__doc__)
-    exit()
+
 
 if __name__ == '__main__': 
     dbx = clsMySql(credentials.FREEDB, verbose=arg('v'))
 
     if arg('t'):
         test()
+    elif arg('h'):
+        message_and_exit()
     elif arg('s'):
         try:
             value = int(sys.stdin.read().strip())
@@ -138,8 +145,8 @@ if __name__ == '__main__':
         stat.printLastValues()
     else:
         main()
-        
-    if arg('q'):
+
+    if arg('q'):    
         print()
         for statid in statList:
             print("SELECT $__time(date_start), value as %s FROM statistics WHERE id='%s'" % (statid, statid))
