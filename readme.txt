@@ -17,8 +17,10 @@ instalace a spuštění
 1) stáhni projekt
 2) přejmenuj credentials_distrib.py na credentials.py
 3) doplň do credentials.py správné přihlašovací údaje
-4) spusť pistat.py
-5) pro pravidelné vytváření statistik spouštěj pistat.py cronem. 
+4) doinstaluj tkinter, viz install.sh
+5) nainstaluj venv spustenim bash install.sh
+6) ve venv spusť pistat.py
+7) pro pravidelné vytváření statistik spouštěj pistat.py cronem. 
    nevadí, pokud by se tento modul spouštěl paralelně z více míst
    (klíčem v db je datum, tekže nedojde k duplikování hodnot)
 
@@ -43,3 +45,4 @@ jak se zapojit
 3) každopádně si vytvoř novou větev 
 4) po skončení vývoje do ní zaintegruj master větev
 5) pošli merge request
+

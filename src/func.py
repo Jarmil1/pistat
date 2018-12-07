@@ -74,15 +74,25 @@ class clsMyStat:
         self.tablename = 'statistics'
         self.verbose = verbose
 
+    def getAllStats(self):
+        """ Vrati seznam ID vsech statistik v databazi. 
+            Pro volani teto funkce muze but trida konstruovana bez spravneho stat_id"""
+        r = self.database.fetchall("SELECT DISTINCT id FROM %s" % (self.tablename))
+        return [ x[0] for x in r ]
+
+    def getLastValues(self,count=0):
+        """ Vrati nejnovejsich count polozek statistiky. Je-li count=0, pak vsechny"""
+        q = "SELECT date_start,value FROM %s WHERE (id='%s') ORDER BY date_start DESC" % (self.tablename,self.stat_id)
+        if count:
+            q += " LIMIT 0,%s" % count
+        return self.database.fetchall(q )
+
     def printLastValues(self,count=0):
         """ Vytiskne nejnovejsich count polozek statistiky.
             Je-li count=0, tiskne vsechny"""
         if self.verbose:    
             print("Poslednich %s hodnot ve statistice %s:" % (count,self.stat_id))
-        q = "SELECT date_start,value FROM %s WHERE (id='%s') ORDER BY date_start DESC" % (self.tablename,self.stat_id)
-        if count:
-            q += " LIMIT 0,%s" % count
-        r = self.database.fetchall(q )
+        r = self.getLastValues(count)
         for row in r:
             print("%s\t%s" % (row[0],row[1]))
         
