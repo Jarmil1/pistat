@@ -66,19 +66,25 @@ class clsMySql:
 class clsMyStat:
     ''' Trida pro ukladani statistik do databaze '''
 
-    def __init__(self, database, stat_id):
+    def __init__(self, database, stat_id, verbose=False):
         global statList
         statList.append(stat_id)
         self.database = database
         self.stat_id = stat_id
         self.tablename = 'statistics'
+        self.verbose = verbose
 
-    def printLastValues(self,count):
-        """ Vytiskne nejnovejsich count polozek statistiky """
-        print("Poslednich %s hodnot ve statistice %s:" % (count,self.stat_id))
-        r = self.database.fetchall("SELECT date_start,value FROM %s WHERE (id='%s') ORDER BY date_start DESC LIMIT 0,%s" % (self.tablename,self.stat_id,count) )
+    def printLastValues(self,count=0):
+        """ Vytiskne nejnovejsich count polozek statistiky.
+            Je-li count=0, tiskne vsechny"""
+        if self.verbose:    
+            print("Poslednich %s hodnot ve statistice %s:" % (count,self.stat_id))
+        q = "SELECT date_start,value FROM %s WHERE (id='%s') ORDER BY date_start DESC" % (self.tablename,self.stat_id)
+        if count:
+            q += " LIMIT 0,%s" % count
+        r = self.database.fetchall(q )
         for row in r:
-            print("%s:\t%s" % (row[0],row[1]))
+            print("%s\t%s" % (row[0],row[1]))
         
     def addStat(self,value,datediff):
         """Prida jednu polozku statistiky pod udane datum. Pokud uz existuje, prepise ji

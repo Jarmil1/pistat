@@ -11,6 +11,7 @@
         -sName  uloz stup do statistiky Name a skonci. 
                 Vstupem je celociselna hodnota na stdin. Priklad:
                     cat somefile | wc -l | pistat.py -sSTAT_SOMEFILE_LINES
+        -pName  print. Vytiskni statistiku Name
 """
 
 from func import *
@@ -38,7 +39,7 @@ PIRATI_KS = {
 	
 # Syntax one-liners
 def arg(argumentName):
-    return getArg(argumentName,"tvqs:")
+    return getArg(argumentName,"tvqs:p:")
 
 ##############################################################################################################
 # FUNKCE
@@ -132,6 +133,9 @@ if __name__ == '__main__':
             message_and_exit("ERROR: expected number on stdio")
         if value:
             Stat(dbx, arg('s'), value, 0, '')
+    elif arg('p'):
+        stat = clsMyStat(dbx, arg('p'))
+        stat.printLastValues()
     else:
         main()
         
