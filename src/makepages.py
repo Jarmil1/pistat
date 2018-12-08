@@ -45,6 +45,8 @@ def make_graph( dbx, stat_id, filename=""):
     ax = plt.axes()
     ax.xaxis.set_major_locator(plt.MaxNLocator(6))  # pocet ticku na X ose
     plt.plot(X, Y, 'k-', linewidth=3.0) 
+    plt.ylim(bottom=0)  # osa Y zacina vzdy od nuly
+    plt.ticklabel_format(style='plain', axis='y')
     plt.tick_params(axis='both', which='major', labelsize=16) # velikost fontu na osach
     if filename:
         plt.savefig(filename, bbox_inches='tight')
