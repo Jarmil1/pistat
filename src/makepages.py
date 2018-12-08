@@ -43,16 +43,15 @@ def make_graph( dbx, stat_id, filename=""):
     # create graph
     figure(num=None, figsize=(16, 10), dpi=80, facecolor='w', edgecolor='w')
     ax = plt.axes()
+    ax.xaxis.set_major_locator(plt.MaxNLocator(6))  # pocet ticku na X ose
     plt.plot(X, Y, 'k-', linewidth=3.0) 
-    ax.xaxis.set_major_locator(plt.MaxNLocator(6))
-    plt.tick_params(axis='both', which='major', labelsize=16)
+    plt.tick_params(axis='both', which='major', labelsize=16) # velikost fontu na osach
     if filename:
-        plt.savefig(filename)
+        plt.savefig(filename, bbox_inches='tight')
     else:
         plt.show()
     
-    # nutne pro usetreni pameti    
-    plt.close()    
+    plt.close()   # pri vetsim poctu grafu nutne (memory leak)  
 
 
 def make_pages(dbx, dirname):
@@ -73,7 +72,7 @@ def make_pages(dbx, dirname):
         i += 1
         print("[%s/%s]: Creating %s                       \r" % (i, len(stats), stat), end = '\r')
 
-        #make_graph(dbx, stat, "%s/img/%s.png" % (dirname, stat) )
+        make_graph(dbx, stat, "%s/img/%s.png" % (dirname, stat) )
         
         # najdi pro ID statistiky odpovidajici radek ve statnames, 
         # nacti z nej nazev, dulezitost...
@@ -106,4 +105,4 @@ if __name__=='__main__':
         make_pages(dbx, arg('o'))   
         print("Done"+' '*70)
         dbx.close()
-
+        
