@@ -4,6 +4,7 @@
     a uklada je do MySQL databaze, z niz mohou byt nacteny napr. Grafanou
     Parametry:
         -h      help: vypise tuto napovedu
+        -a      vypis seznam ID vsech statistik
         -t      spusti jen testovaci cast kodu ve funkci test()
                 pouziva se pri ladeni, kdy nechces spustit cele statistiky,
                 ale jen urcitou cast
@@ -37,10 +38,10 @@ PIRATI_KS = {
     "PI_MEMBERS_JIHOCESKY": "https://forum.pirati.cz/memberlist.php?mode=group&g=40",
     "PI_MEMBERS_NEZARAZENI": "https://forum.pirati.cz/memberlist.php?mode=group&g=437"
     }
-	
-# Syntax one-liners
+
+
 def arg(argumentName):
-    return getArg(argumentName,"tvqs:p:h")
+    return getArg(argumentName,"tvqs:p:ha")
 
 ##############################################################################################################
 # FUNKCE
@@ -133,6 +134,11 @@ if __name__ == '__main__':
         test()
     elif arg('h'):
         message_and_exit()
+    elif arg('a'):
+        s = clsMyStat(dbx, '')
+        lst = s.getAllStats()
+        for l in lst:
+            print(l)
     elif arg('s'):
         try:
             value = int(sys.stdin.read().strip())
