@@ -5,6 +5,7 @@
 import random, re, getopt, sys
 import urllib.request
 import mysql.connector
+import os
 
 statList = []   # zde ukladej seznam vsech vygenerovanych statistik
 
@@ -122,7 +123,7 @@ def PrintLastValues(dbx,statname,count):
 
 
 def getUrlContent(url,verbose=False):
-    ''' Vraci obsah url jako retezec prevedeny na utf-8, nebo None pri neuspechu '''	
+    ''' Vrat obsah url jako retezec prevedeny na utf-8, nebo None pri neuspechu '''	
     if verbose: print("Opening %s" % url)
     try:
         with urllib.request.urlopen(url) as f:
@@ -132,7 +133,7 @@ def getUrlContent(url,verbose=False):
 
         
 def getLines(url,verbose=False):
-    ''' Vraci obsah url jako seznam radku, nebo None pri neuspechu '''	
+    ''' Vrat obsah url jako seznam radku, nebo None pri neuspechu '''	
     cont = getUrlContent(url, verbose)
     return cont.split("\n") if cont else None
 
@@ -142,15 +143,41 @@ def grep(regexp,list_of_strings):
     rc = re.compile(regexp)		
     return list(filter(rc.search, list_of_strings))
 
-	
-def getArg(argumentName,allowedArguments):
-	''' Vraci parametr prikazoveho radku. 
-		allowedArguments:	specifikace povolenych argumentu v syntaxi funkce getopt()
-		return: 			U parametru typu flag vrati true/false, u retezcoveho aktualni hodnotu.
-	'''
-	(volbytmp,argumenty) = getopt.getopt(sys.argv[1:],allowedArguments)
-	for v in volbytmp: 
-		if v[0]=="-" + argumentName: 
-			return v[1] if v[1] else True
-	return False
 
+def getArg(argumentName,allowedArguments):
+    ''' Vraci parametr prikazoveho radku. 
+        allowedArguments:	specifikace povolenych argumentu v syntaxi funkce getopt()
+        return: 			U parametru typu flag vrati true/false, u retezcoveho aktualni hodnotu.
+    '''
+    (volbytmp,argumenty) = getopt.getopt(sys.argv[1:],allowedArguments)
+    for v in volbytmp: 
+        if v[0]=="-" + argumentName: 
+            return v[1] if v[1] else True
+    return False
+
+
+def readfile(filename):
+    """ Vrat obsah souboru filename """
+    with open(filename,'r') as f:
+        ret = f.read()
+    return ret
+    
+
+def writefile(string, filename):
+    """ Uloz retezec string do filename. """
+    with open(filename, 'w') as f:
+        f.write(string)
+        
+    
+def makedir(dirname):
+    """ zajisti, ze adresar dirname existuje """
+    if not os.path.isdir(dirname):
+        os.mkdir(dirname)
+
+    
+def replace_all(string, replaces):    
+    """ proved nahrady v retezci string. 'replaces' je hash tabulka """
+    for x in replaces:
+        string = string.replace(x, replaces[x])
+    return string
+    

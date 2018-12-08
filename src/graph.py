@@ -1,10 +1,10 @@
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
-from func import clsMyStat, clsMySql
+import func
 import datetime
 import credentials
-import os
+import shutil
 
 def make_graph( dbx, stat_id, filename=""):
     """ Vytvori carovy graf. Ulozi jej do souboru,
@@ -12,7 +12,7 @@ def make_graph( dbx, stat_id, filename=""):
     """    
 
     # ziskej statistiku
-    stat = clsMyStat(dbx, stat_id)
+    stat = func.clsMyStat(dbx, stat_id)
     r = stat.getLastValues(0)
     r.reverse()
 
@@ -26,7 +26,7 @@ def make_graph( dbx, stat_id, filename=""):
     figure(num=None, figsize=(16, 10), dpi=80, facecolor='w', edgecolor='w')
     ax = plt.axes()
     plt.plot(X, Y, 'k-', linewidth=3.0) 
-    ax.xaxis.set_major_locator(plt.MaxNLocator(10))
+    ax.xaxis.set_major_locator(plt.MaxNLocator(6))
     plt.tick_params(axis='both', which='major', labelsize=16)
     if filename:
         plt.savefig(filename)
@@ -37,21 +37,36 @@ def make_graph( dbx, stat_id, filename=""):
     plt.close()    
 
 
-dbx = clsMySql(credentials.FREEDB)
+def make_pages(dbx, dirname):
+    """ Nageneruj stranky a obrazky do adresare dirname """
 
-dirname = 'img'
-if not os.path.isdir(dirname):
-    os.mkdir(dirname)
+    shutil.rmtree(dirname)
+    func.makedir(dirname)
+    func.makedir(dirname+"/img")
+    #func.makedir(dirname+"/assets")
 
-s = clsMyStat(dbx, '')
-stats = s.getAllStats()
-i = 0
-for stat in stats:
-    i += 1
-    print("[%s/%s]: Creating %s.png                       \r" % (i, len(stats), stat), end = '\r')
-    make_graph(dbx, stat, "%s/%s.png" % (dirname, stat) )
-   
-print()
-   
-dbx.close()
+    s = func.clsMyStat(dbx, '')
+    stats = s.getAllStats()
+
+    i, index = 0, ""
+    for stat in stats[:5]:
+        i += 1
+        print("[%s/%s]: Creating %s                       \r" % (i, len(stats), stat), end = '\r')
+        make_graph(dbx, stat, "%s/img/%s.png" % (dirname, stat) )
+        page = func.replace_all(func.readfile('../templates/stat.htm'),
+            { '%stat_name%': stat, '%stat_desc%': '', '%stat_image%': "img/%s.png" % stat } )
+        func.writefile(page, "%s/%s.htm" % (dirname, stat))    
+        index += "<a href='%s.htm'>%s</a>\n" % (stat, stat)
+
+    page = func.replace_all(func.readfile('../templates/index.htm'), { '%body%': index } )
+    func.writefile(page, "%s/index.htm" % dirname)    
+
+    shutil.copytree('../templates/assets', "%s/assets" % dirname)
+
+
+if __name__=='__main__':
+    dbx = func.clsMySql(credentials.FREEDB)
+    make_pages(dbx, '../output')   
+    print("Done"+' '*70)
+    dbx.close()
 
