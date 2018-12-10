@@ -1,4 +1,5 @@
 #! /usr/bin/python3
+# -*- coding: utf-8 -*-
 
 """ Vytvari piratske statistiky z nedatabazovych zdroju, napr. CSV
     a uklada je do MySQL databaze, z niz mohou byt nacteny napr. Grafanou
@@ -18,7 +19,7 @@
 
 from func import *
 import credentials
-
+import re
 
 # Pro zjistovani poctu clenu: id statistiky a URL na forum prislusne skupiny KS
 PIRATI_KS = { 
@@ -40,12 +41,10 @@ PIRATI_KS = {
     }
 
 
+
 def arg(argumentName):
     return getArg(argumentName,"tvqs:p:ha")
 
-##############################################################################################################
-# FUNKCE
-##############################################################################################################
 
 def statFioBalance(account):	
     """ Statistika zustatku na uctu, vraci zjistenou hodnotu nebo 0 
@@ -83,6 +82,19 @@ def statNrOfMembers(id, url):
     return count
 
     
+def stat_forum():
+    """ Pocet prispevku a uzivatelu fora"""
+    lines = getUrlContent('https://forum.pirati.cz/index.php')
+    
+    res = re.search(r'Celkem p(.*?)<strong>(.*?)</strong> &bull', lines)
+    if res and len(res.groups())>1:
+        Stat(dbx, "PI_FORUM_POSTS", int(res[2]), 0, 'Pocet prispevku na piratskem foru')
+    
+    res = re.search(r'Celkem zaregistrovan(.*?)<strong>(.*?)</strong> &bull', lines)
+    if res and len(res.groups())>1:
+        Stat(dbx, "PI_FORUM_USERS", int(res[2]), 0, 'Pocet uzivatelu na piratskem foru')
+
+
 def message_and_exit(message=""):    
     if message:
         print(message)
@@ -120,11 +132,12 @@ def main():
         sum += statNrOfMembers(id, PIRATI_KS[id])
     Stat(dbx, "PI_MEMBERS_TOTAL", sum, 0, 'Pocet clenu CPS celkem')			
 
+    stat_forum()
+
     
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
     pass   
-    
 
 
 if __name__ == '__main__': 
