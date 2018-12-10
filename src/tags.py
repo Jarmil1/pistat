@@ -105,7 +105,7 @@ def main():
 if __name__ == '__main__': 
 
     # nacti koordinaty mest
-    with open("cities","r") as f:
+    with open("../config/cities","r") as f:
         coords = f.readlines()
 
     if arg('c'):
