@@ -1,9 +1,10 @@
 #! /usr/bin/python3
 
-""" Generuje stranky s piratskymi statistikami
+""" Generuje stranky s piratskymi statistikami. Dela primitivni zalohu DB.
     Parametry:
         -h      help: vypise tuto napovedu
         -oName  jmeno vystupniho adresare, napr -o../output
+        -bName  provede dummy zalohu DB do adresare Name
 """
 
 import matplotlib.pyplot as plt
@@ -14,7 +15,7 @@ import credentials
 import shutil
 
 def arg(argumentName):
-    return func.getArg(argumentName,"ho:")
+    return func.getArg(argumentName,"ho:b:")
     
     
 def message_and_exit(message=""):    
@@ -98,14 +99,32 @@ def make_pages(dbx, dirname):
     shutil.copytree('../templates/assets', "%s/assets" % dirname)
 
 
+def dummy_backup_db(dbx, dirname):
+    """ Primitivni zaloha db do adresare dirname """
+    print("(dummy) database backup to %s" % dirname)
+
+    func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
+    shutil.rmtree(dirname)
+    func.makedir(dirname)
+    
+    s = func.clsMyStat(dbx, '')
+    for stat in s.getAllStats(): 
+        stat_object = func.clsMyStat(dbx, stat)
+        r = stat_object.getLastValues(0)
+        r = [ "\t".join(('{0:%d.%m.%Y}'.format(x[0]), str(x[1]))) for x in r]
+        func.writefile("\n".join(r), "%s/%s" % (dirname, stat))
+
+
 if __name__=='__main__':
     if arg('h'):
         message_and_exit()
-    elif not arg('o'):        
-        message_and_exit("ERROR: missing argument -o")
+    elif not arg('o') and not arg('b'):        
+        message_and_exit("error: missing argument. specify -o or -b")
     else:        
         dbx = func.clsMySql(credentials.FREEDB)
-        make_pages(dbx, arg('o'))   
+        #make_pages(dbx, arg('o'))   
         print("Done"+' '*70)
+        if arg('b'):
+            dummy_backup_db(dbx, arg('b'))
         dbx.close()
         
