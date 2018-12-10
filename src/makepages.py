@@ -122,8 +122,9 @@ if __name__=='__main__':
         message_and_exit("error: missing argument. specify -o or -b")
     else:        
         dbx = func.clsMySql(credentials.FREEDB)
-        #make_pages(dbx, arg('o'))   
-        print("Done"+' '*70)
+        if arg('o'):
+            make_pages(dbx, arg('o'))   
+            print("Done"+' '*70)
         if arg('b'):
             dummy_backup_db(dbx, arg('b'))
         dbx.close()
