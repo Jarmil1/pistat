@@ -15,11 +15,15 @@
     Parametry:
     -h  vypise tuto napovedu
     -c  vypise seznam tagu mest
+    -m  vytvori google mapu
+    -f  jmeno souboru s mapou
 """
 
 from func import *
 import re 
 from xml.etree import ElementTree as ET
+from gmplot import gmplot
+
 
 #  Seznam ID for, ktera budou prohledavana
 FORUM_IDS = [
@@ -29,10 +33,10 @@ FORUM_IDS = [
 
 
 def arg(argumentName):
-    return getArg(argumentName,"hc")
+    return getArg(argumentName,"hcmf:")
 
 
-def message_and_exit(message=""):    
+def dead_parrot(message=""):    
     if message:
         print(message)
     print(__doc__)
@@ -69,11 +73,10 @@ def _get_coords(coords,tag):
     return None, None
 
 
-def main():
-
-    # nacti prispevky z atom feedu vybranych for.
-    # u vsech, kde je uveden #hastag se jmenem mesta, dopln koordinaty,
-    # a uloz do struktury
+def read_feed():
+    """ nacti prispevky z atom feedu vybranych for. u vsech, kde je 
+        uveden #hastag se jmenem mesta, dopln koordinaty a uloz do struktury
+    """
     records = []
     for id in FORUM_IDS:
         xml = _getXml("https://forum.pirati.cz/feed/topic/%s" % id)
@@ -87,31 +90,70 @@ def main():
                     "author": _dummy_child('name',_dummy_child('author', entry)).text,
                     "date": _dummy_child('published', entry).text,
                     "content": cont,
-                    "tags": ",".join(tags),
+                    "tags": tags,
                 }   
                 for tag in tags:
                     lat, lon = _get_coords(coords, tag)
                     if lat:
-                        record["latitude"] = lat
-                        record["longitude"] = lon        
+                        record["latitude"] = float(lat)
+                        record["longitude"] = float(lon)        
             if "latitude" in record.keys():
                 records.append(record)                
+    return records
 
-    # vystup 
-    for r in records:
-        print("%s\t%s\t%s;%s\t%s\t%s" % (r["author"], r["date"], r["latitude"], r["longitude"], r["tags"], r["content"]) )
+
+def main():
+
+    # vystup do stdout
+    for r in read_feed():
+        print("%s\t%s\t%s;%s\t%s\t%s" % (r["author"], r["date"], r["latitude"], r["longitude"], ','.join(r["tags"]), r["content"]) )
+
+
+
+def make_map( filename ):
+    """ Vytvor HTML stranku s mapou CR (centrovana cca havlickuv brod)
+        ze vsech tagu nalezenych ve foru. Kazde znace prirad barvu podle posledniho uvedeneho tagu
+    """
+
+    gmap = gmplot.GoogleMapPlotter(49.803904, 15.558176, 9)
+
+    # dej na mapu markery
+    for r in read_feed():
+
+        text = re.sub('<[^<]+?>', '', r['content'])
+        text = re.sub('#[a-zA-Z]+', '', text)
+        text = re.sub('Statistiky: .+$', '', text).strip()
+        color = None
+        for tag in r['tags']:
+            try:
+                color = list(filter(lambda x: x.startswith(tag+'\t'), tags_to_colors))[0].split('\t')[1].strip()
+            except IndexError:
+                pass
+        color = color if color else 'black'        
+        gmap.marker(r['latitude'], r['longitude'], color, title="%s: %s" % (r['author'], text))
+
+    gmap.draw(filename)
 
     
 if __name__ == '__main__': 
+
+    if arg('m') and not arg('f'):
+        dead_parrot('argument error: must specify -m and -f together')
 
     # nacti koordinaty mest
     with open("../config/cities","r") as f:
         coords = f.readlines()
 
+    # nacti prirazeni tagu barvam
+    with open("../config/colors","r") as f:
+        tags_to_colors = f.readlines()
+
     if arg('c'):
         for city in coords:
             print('#' + city.split("\t")[0] )
     elif arg('h'):
-        message_and_exit()
+        dead_parrot()
+    elif arg('m'):
+        make_map(arg('f'))
     else:
         main()
