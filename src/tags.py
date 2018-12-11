@@ -20,10 +20,12 @@
 """
 
 from func import *
+import func
 import re 
 from xml.etree import ElementTree as ET
 from gmplot import gmplot
-
+import shutil
+import os
 
 #  Seznam ID for, ktera budou prohledavana
 FORUM_IDS = [
@@ -33,7 +35,7 @@ FORUM_IDS = [
 
 
 def arg(argumentName):
-    return getArg(argumentName,"hcmf:")
+    return func.getArg(argumentName,"hcmf:")
 
 
 def dead_parrot(message=""):    
@@ -115,6 +117,13 @@ def make_map( filename ):
         ze vsech tagu nalezenych ve foru. Kazde znace prirad barvu podle posledniho uvedeneho tagu
     """
 
+    # markery je treba prekopirovat do vysledneho adresare
+    dirname = os.path.dirname(filename) + "/markers"
+    func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
+    shutil.rmtree(dirname)
+    #func.makedir(dirname)
+    shutil.copytree('../venv/lib/python3.6/site-packages/gmplot/markers', dirname)
+
     gmap = gmplot.GoogleMapPlotter(49.803904, 15.558176, 9)
 
     # dej na mapu markery
@@ -134,6 +143,10 @@ def make_map( filename ):
 
     gmap.draw(filename)
 
+    # HACK: gmap uklada do HTML cestu k obrazkum markeru nekam do riti. oprav to 
+    c = re.sub( r"MarkerImage\('.+?gmplot/markers", "MarkerImage('markers", func.readfile(filename))
+    func.writefile(c, filename)
+    
     
 if __name__ == '__main__': 
 
