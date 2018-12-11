@@ -88,11 +88,11 @@ def stat_forum():
     
     res = re.search(r'Celkem p(.*?)<strong>(.*?)</strong> &bull', lines)
     if res and len(res.groups())>1:
-        Stat(dbx, "PI_FORUM_POSTS", int(res[2]), 0, 'Pocet prispevku na piratskem foru')
+        Stat(dbx, "PI_FORUM_POSTS", int(res.group(2)), 0, 'Pocet prispevku na piratskem foru')
     
     res = re.search(r'Celkem zaregistrovan(.*?)<strong>(.*?)</strong> &bull', lines)
     if res and len(res.groups())>1:
-        Stat(dbx, "PI_FORUM_USERS", int(res[2]), 0, 'Pocet uzivatelu na piratskem foru')
+        Stat(dbx, "PI_FORUM_USERS", int(res.group(2)), 0, 'Pocet uzivatelu na piratskem foru')
 
 
 def message_and_exit(message=""):    
@@ -133,6 +133,7 @@ def main():
     Stat(dbx, "PI_MEMBERS_TOTAL", sum, 0, 'Pocet clenu CPS celkem')			
 
     stat_forum()
+    
 
     
 def test():
