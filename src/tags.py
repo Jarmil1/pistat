@@ -29,8 +29,9 @@ import os
 
 #  Seznam ID for, ktera budou prohledavana
 FORUM_IDS = [
-    1786,   # pozornosti hodne clanky
-    41976,  # testovaci
+    #1786,   # pozornosti hodne clanky
+    #41976,  # testovaci
+    45114,  # piskoviste mrtveho papouska
 ]
 
 
@@ -121,7 +122,6 @@ def make_map( filename ):
     dirname = os.path.dirname(filename) + "/markers"
     func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
     shutil.rmtree(dirname)
-    #func.makedir(dirname)
     shutil.copytree('../venv/lib/python3.6/site-packages/gmplot/markers', dirname)
 
     gmap = gmplot.GoogleMapPlotter(49.803904, 15.558176, 9)
