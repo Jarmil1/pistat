@@ -130,8 +130,8 @@ def make_map( filename ):
     for r in read_feed():
 
         text = re.sub('<[^<]+?>', '', r['content'])
-        text = re.sub('#[a-zA-Z]+', '', text)
         text = re.sub('Statistiky: .+$', '', text).strip()
+        text = re.sub('#[a-zA-Z]+', '', text)
         color = None
         for tag in r['tags']:
             try:

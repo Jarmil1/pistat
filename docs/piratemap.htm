@@ -14,10 +14,19 @@
 		};
 		var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
+		var latlng = new google.maps.LatLng(49.830000, 18.270000);
+		var img = new google.maps.MarkerImage('markers/FFE4C4.png');
+		var marker = new google.maps.Marker({
+		title: "Jarmil: Rada našeho města  rozhodla o vybudování nemocnice pro těžce zraněné až mrtvé papoušky.   ",
+		icon: img,
+		position: latlng
+		});
+		marker.setMap(map);
+
 		var latlng = new google.maps.LatLng(49.750000, 13.370000);
 		var img = new google.maps.MarkerImage('markers/00FFFF.png');
 		var marker = new google.maps.Marker({
-		title: "Jarmil: On není mrtvý, on si jen tak hoví. : Napsal od Jarmil — 12 pro 2018, 08:18",
+		title: "Jarmil: On není mrtvý, on si jen tak hoví. ",
 		icon: img,
 		position: latlng
 		});
@@ -26,7 +35,7 @@
 		var latlng = new google.maps.LatLng(49.200000, 16.610000);
 		var img = new google.maps.MarkerImage('markers/FAEBD7.png');
 		var marker = new google.maps.Marker({
-		title: "Jarmil: Ten papoušek chcííííp! : Napsal od Jarmil — 12 pro 2018, 08:17",
+		title: "Jarmil: Ten papoušek chcííííp! ",
 		icon: img,
 		position: latlng
 		});
