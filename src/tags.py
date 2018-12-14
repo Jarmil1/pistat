@@ -17,6 +17,10 @@
     -c  vypise seznam tagu mest
     -m  vytvori google mapu
     -f  jmeno souboru s mapou
+    -rVal maximalni nahodny rozptyl markeru. Val je desetinne cislo:
+         0.0001 vhodne pro rozptyl v ramci mesta
+         0.001 rozptyl v ramci republiky
+    
 """
 
 from func import *
@@ -25,6 +29,7 @@ import re
 from xml.etree import ElementTree as ET
 from gmplot import gmplot
 import shutil
+import random
 import os
 
 #  Seznam ID for, ktera budou prohledavana
@@ -36,7 +41,7 @@ FORUM_IDS = [
 
 
 def arg(argumentName):
-    return func.getArg(argumentName,"hcmf:")
+    return func.getArg(argumentName,"hcmf:r:")
 
 
 def dead_parrot(message=""):    
@@ -76,7 +81,7 @@ def _get_coords(coords,tag):
     return None, None
 
 
-def read_feed():
+def read_feed(rozptyl):
     """ nacti prispevky z atom feedu vybranych for. u vsech, kde je 
         uveden #hastag se jmenem mesta, dopln koordinaty a uloz do struktury
     """
@@ -100,6 +105,10 @@ def read_feed():
                     if lat:
                         record["latitude"] = float(lat)
                         record["longitude"] = float(lon)        
+                        # posun nahodne koordinaty 
+                        record["latitude"] += record["latitude"]  * rozptyl * (random.random() - 0.5)
+                        record["longitude"] += record["longitude"]  * rozptyl * (random.random() - 0.5)
+                        
             if "latitude" in record.keys():
                 records.append(record)                
     return records
@@ -113,7 +122,7 @@ def main():
 
 
 
-def make_map( filename ):
+def make_map( filename, rozptyl ):
     """ Vytvor HTML stranku s mapou CR (centrovana cca havlickuv brod)
         ze vsech tagu nalezenych ve foru. Kazde znace prirad barvu podle posledniho uvedeneho tagu
     """
@@ -127,7 +136,7 @@ def make_map( filename ):
     gmap = gmplot.GoogleMapPlotter(49.803904, 15.558176, 9)
 
     # dej na mapu markery
-    for r in read_feed():
+    for r in read_feed(rozptyl):
 
         text = re.sub('<[^<]+?>', '', r['content'])
         text = re.sub('Statistiky: .+$', '', text).strip()
@@ -139,7 +148,7 @@ def make_map( filename ):
             except IndexError:
                 pass
         color = color if color else 'black'        
-        gmap.marker(r['latitude'], r['longitude'], color, title="%s: %s" % (r['author'], text))
+        gmap.marker(r['latitude'], r['longitude'], color, title="%s [%s]" % (text, r['author']))
 
     gmap.draw(filename)
 
@@ -167,6 +176,7 @@ if __name__ == '__main__':
     elif arg('h'):
         dead_parrot()
     elif arg('m'):
-        make_map(arg('f'))
+        rozptyl = float(arg('r')) if arg('r') else 0
+        make_map(arg('f'), rozptyl)
     else:
         main()

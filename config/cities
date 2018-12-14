@@ -1,3 +1,16 @@
+# seznam mist, ktera se mohou pouzit jako tag
+# Format: tag,plny nazev mesta, zemepisne souradnice
+# oddeleno znakem tabulatoru
+#
+# lze pridavat i mistni nazvy: ruzyne, synkac.
+#
+
+#prazske mistni nazvy
+ruzyne	Ruzyně	50.105	14.270
+synkac	Náměstí bratří Synků	50.064	14.440
+dbk	DBK	50.044	14.449
+
+# mesta
 praha	Praha	50.080	14.430
 brno	Brno	49.200	16.610
 ostrava	Ostrava	49.830	18.270
