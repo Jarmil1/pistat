@@ -6,7 +6,7 @@
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=visualization&sensor=true_or_false"></script>
 <script type="text/javascript">
 	function initialize() {
-		var centerlatlng = new google.maps.LatLng(49.800000, 15.550000);
+		var centerlatlng = new google.maps.LatLng(49.8, 15.55);
 		var myOptions = {
 			zoom: 9,
 			center: centerlatlng,
@@ -14,53 +14,48 @@
 		};
 		var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
-		var latlng = new google.maps.LatLng(50.020797, 14.448245);
-		var img = new google.maps.MarkerImage('markers/000000.png');
+		var latlng = new google.maps.LatLng(50.06891738417307, 14.444054416802109);
+		var img = new google.maps.MarkerImage('markers/demonstrace.png');
 		var marker = new google.maps.Marker({
 		title: "Zprávy z Budějovické: Podchod v DBK zůstává uzavřen, prodejci svařáku chystají protest.  [Jarmil]",
 		icon: img,
 		position: latlng
 		});
 		marker.setMap(map);
-
-		var latlng = new google.maps.LatLng(50.082767, 14.439733);
-		var img = new google.maps.MarkerImage('markers/000000.png');
+var latlng = new google.maps.LatLng(50.08032761274628, 14.436997084760382);
+		var img = new google.maps.MarkerImage('markers/doprava.png');
 		var marker = new google.maps.Marker({
 		title: "a teď něco pro prahu 4: u synkáče jsou Zlý časy, a jezdí tam něco jako šaliny  [Jarmil]",
 		icon: img,
 		position: latlng
 		});
 		marker.setMap(map);
-
-		var latlng = new google.maps.LatLng(50.119695, 14.264539);
-		var img = new google.maps.MarkerImage('markers/000000.png');
+var latlng = new google.maps.LatLng(50.099248418321494, 14.264663043895679);
+		var img = new google.maps.MarkerImage('markers/_default_.png');
 		var marker = new google.maps.Marker({
 		title: "vy mi dáváte, chlapi  tak, odpovědi a novinky:-  vygeneroval jsem novou mapu, zde: https://jarmil1.github.io/pistat/piratemap.htm-  toho plyne že mapa se generuje zatím ručně... já vím, opruz. pokusím se co nejdřív najíst stroj, kde by to mohlo běžet automaticky- přidal jsem náhodný rozptyl, takže se například tři špendlíky  neplácnou na přesně stejné místo- nejasnosti ohledně tagů:    - bruntál je sice díra, ale na mapě ji máme  tagy ale  musí být bez diakritiky. Tedy , nikoliv ě   -  na mapě zatím není, můžeš ho ale přidat tady (stejně jako jakékoliv jiné místo, co chybí): https://github.com/Jarmil1/pistat/blob/ ... fig/cities [Jarmil]",
 		icon: img,
 		position: latlng
 		});
 		marker.setMap(map);
-
-		var latlng = new google.maps.LatLng(49.217789, 16.616561);
-		var img = new google.maps.MarkerImage('markers/000000.png');
+var latlng = new google.maps.LatLng(49.19936109240748, 16.604339076963047);
+		var img = new google.maps.MarkerImage('markers/_default_.png');
 		var marker = new google.maps.Marker({
 		title: "Už Ozzák říkal, že ál je největší díra v republice. (v posledních dnech mi ale zase připadá, že  je největší uzavírka v republice..)On je uzavřený  ? Jak se teď Pražáci dostanou do Vídně? Letecky přes ě . Nebo vyhlídkovou trasou vlakem přes dolní nádraží. Autem přes D1 kolem  to nedoporučuju, za řelice čeká past od ŘSD v podobě semaforů či objížďky kolem Novomlýnských nádrží.Dřív byly u hranic ostnaté dráty. Jak jsme v  tak už nemůžou být, tak se ŘSD snaží útěk za kopečky komplikovat aspoň takto..Btw ten Bruntál asi bude pořádná díra, že se na mapě značka neukázala (teď jsem změnil příspěvek na verzi bez diakritiky, možná se mapa přegeneruje až za nějakou dobu?) [Pavel.Moravec]",
 		icon: img,
 		position: latlng
 		});
 		marker.setMap(map);
-
-		var latlng = new google.maps.LatLng(49.186540, 16.614495);
-		var img = new google.maps.MarkerImage('markers/000000.png');
+var latlng = new google.maps.LatLng(49.20913329703168, 16.60601528323834);
+		var img = new google.maps.MarkerImage('markers/_default_.png');
 		var marker = new google.maps.Marker({
 		title: "Už Ozzák říkal, že ál je největší díra v republice. (v posledních dnech mi ale zase připadá, že  je největší uzavírka v republice..)On je uzavřený  ? Jak se teď Pražáci dostanou do Vídně? [Petr.Vileta]",
 		icon: img,
 		position: latlng
 		});
 		marker.setMap(map);
-
-		var latlng = new google.maps.LatLng(49.988772, 17.466334);
-		var img = new google.maps.MarkerImage('markers/000000.png');
+var latlng = new google.maps.LatLng(49.99472347125985, 17.45623617771061);
+		var img = new google.maps.MarkerImage('markers/_default_.png');
 		var marker = new google.maps.Marker({
 		title: "Už Ozzák říkal, že ál je největší díra v republice. (v posledních dnech mi ale zase připadá, že  je největší uzavírka v republice..)(on je  taková díra, že se na mapě zobrazí jen když asi fakt uvedu   a ne ál, hm..) [Pavel.Moravec]",
 		icon: img,
@@ -68,14 +63,6 @@
 		});
 		marker.setMap(map);
 
-		var latlng = new google.maps.LatLng(49.821144, 18.264523);
-		var img = new google.maps.MarkerImage('markers/FFE4C4.png');
-		var marker = new google.maps.Marker({
-		title: "Rada našeho města  rozhodla o vybudování nemocnice pro těžce zraněné až mrtvé papoušky.    [Jarmil]",
-		icon: img,
-		position: latlng
-		});
-		marker.setMap(map);
 
 	}
 </script>

@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 
 """ 
-    Projde vybrana piratska fora a vypise vsechny prispevky, ve kterych
+    Projde parametrem zadane piratske forum a vypise vsechny prispevky, ve kterych
     byl hashtag podporovaneho mesta. Hashtag se pise bez hacku, carek a mezer,
     napr #roznovpodradhostem
     Ke kazdemu prispevku jsou automaticky doplneny zemepisne koordinaty.
@@ -35,10 +35,47 @@ from func import *
 import func
 import re 
 from xml.etree import ElementTree as ET
-from gmplot import gmplot
 import shutil
 import random
 import os
+
+
+MARKER_JS = """var latlng = new google.maps.LatLng($lat, $lon);
+		var img = new google.maps.MarkerImage('markers/$img');
+		var marker = new google.maps.Marker({
+		title: "$text",
+		icon: img,
+		position: latlng
+		});
+		marker.setMap(map);
+"""
+
+GOOGLE_MAP_HTML = """<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<title>Google Maps - pygmaps </title>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=visualization&sensor=true_or_false"></script>
+<script type="text/javascript">
+	function initialize() {
+		var centerlatlng = new google.maps.LatLng($lat, $lon);
+		var myOptions = {
+			zoom: $scale,
+			center: centerlatlng,
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+		};
+		var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+		$markers
+
+	}
+</script>
+</head>
+<body style="margin:0px; padding:0px;" onload="initialize()">
+	<div id="map_canvas" style="width: 100%; height: 100%;"></div>
+</body>
+</html>
+"""
 
 
 def arg(argumentName):
@@ -71,7 +108,7 @@ def _dummy_child(name, element):
             return child
 
 
-def _get_coords(coords,tag):
+def _get_coords(coords, tag):
     """ Vraci par latitude, longitude koordinatu pro mesto identifikovane 
         tagem tag. 
     """
@@ -85,6 +122,7 @@ def _get_coords(coords,tag):
 def read_feed(rozptyl):
     """ nacti prispevky z atom feedu vybranych for. u vsech, kde je 
         uveden #hastag se jmenem mesta, dopln koordinaty a uloz do struktury
+         rozptyl .. maximalni hodnota nahodnho posunu markeru proti skutecnym koordinatum
     """
     records = []
 
@@ -116,47 +154,56 @@ def read_feed(rozptyl):
     return records
 
 
-def main():
-
-    # vystup do stdout
+def flush_feed():
+    # vystup feedu do stdout
     for r in read_feed():
         print("%s\t%s\t%s;%s\t%s\t%s" % (r["author"], r["date"], r["latitude"], r["longitude"], ','.join(r["tags"]), r["content"]) )
 
 
+def js_marker(lat, lon, img, text):
+    return MARKER_JS.replace('$lat', str(lat)).replace('$lon', str(lon)). \
+            replace('$img', img).replace('$text', text)
+
+        
+def html_map(lat, lon, scale, markers):
+    return GOOGLE_MAP_HTML.replace('$lat', str(lat)).replace('$lon', str(lon)). \
+            replace('$scale', str(scale)).replace('$markers', markers)
+
 
 def make_map(filename, latitude, longitude, scale, rozptyl):
-    """ Vytvor HTML stranku s mapou (ceska republika je centrovana cca havlickuv brod)
-        ze vsech tagu nalezenych ve foru. Kazde znace prirad barvu podle posledniho uvedeneho tagu
-    """
+    """ Vytvor HTML stranku s mapou ze vsech tagu nalezenych ve foru. Znackam prirad obrazek, existuje-li"""
 
-    # markery je treba prekopirovat do vysledneho adresare
+    # markery je treba prekopirovat do vysledneho adresare...
     dirname = os.path.dirname(filename) + "/markers"
     func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
     shutil.rmtree(dirname)
     shutil.copytree('../venv/lib/python3.6/site-packages/gmplot/markers', dirname)
 
-    gmap = gmplot.GoogleMapPlotter(latitude, longitude, scale)
-
+    # ...vcetne vlastnich markeru
+    my_markers_path = '../templates/markers/'
+    for file_name in os.listdir(my_markers_path):
+        full_file_name = os.path.join(my_markers_path, file_name)
+        if (os.path.isfile(full_file_name)):
+            shutil.copy(full_file_name, dirname)
+        
     # dej na mapu markery
-    for r in read_feed(rozptyl):
+    feed = read_feed(rozptyl)
+    markers = ""
+    for r in feed:
 
         text = re.sub('<[^<]+?>', '', r['content'])
         text = re.sub('Statistiky: .+$', '', text).strip()
         text = re.sub('#[a-zA-Z]+', '', text)
         color = None
+
+        image = "_default_.png"
         for tag in r['tags']:
-            try:
-                color = list(filter(lambda x: x.startswith(tag+'\t'), tags_to_colors))[0].split('\t')[1].strip()
-            except IndexError:
-                pass
-        color = color if color else 'black'        
-        gmap.marker(r['latitude'], r['longitude'], color, title="%s [%s]" % (text, r['author']))
+            if (os.path.isfile(os.path.join(my_markers_path, "%s.png" % tag))):
+                image = "%s.png" % tag
+                
+        markers += js_marker(r['latitude'], r['longitude'], image, "%s [%s]" % (text, r['author']))
 
-    gmap.draw(filename)
-
-    # HACK: gmap uklada do HTML cestu k obrazkum markeru nekam do riti. oprav to 
-    c = re.sub( r"MarkerImage\('.+?gmplot/markers", "MarkerImage('markers", func.readfile(filename))
-    func.writefile(c, filename)
+    func.writefile(html_map(latitude, longitude, scale, markers), filename)
     
     
 if __name__ == '__main__': 
@@ -164,13 +211,9 @@ if __name__ == '__main__':
     if arg('m') and not arg('f'):
         dead_parrot('argument error: must specify -m and -f together')
 
-    # nacti koordinaty mest
+    # nacti koordinaty mest a mistnich nazvu
     with open("../config/cities","r") as f:
         coords = f.readlines()
-
-    # nacti prirazeni tagu barvam
-    with open("../config/colors","r") as f:
-        tags_to_colors = f.readlines()
 
     if arg('c'):
         for city in coords:
@@ -186,4 +229,4 @@ if __name__ == '__main__':
         lon = float(arg('L')) if arg('L') else 15.55
         make_map(arg('f'), lat, lon, scale, rozptyl)
     else:
-        main()
+        flush_feed()
