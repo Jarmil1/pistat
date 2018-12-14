@@ -20,6 +20,14 @@
     -rVal maximalni nahodny rozptyl markeru. Val je desetinne cislo:
          0.0001 vhodne pro rozptyl v ramci mesta
          0.001 rozptyl v ramci republiky
+
+    Vstup:
+    -iForum: id fora, z nejz budou nacteny tagy
+         
+    Uvodni rozmer a pozice mapy:     
+    -sVal  scale, rozsah cca 1..20. Default: 9 (velikost CR)
+    -lVal  latitude, default 49.80
+    -LVal  longitude, default 15.55 (cca koordinaty havlickova brodu)
     
 """
 
@@ -32,16 +40,9 @@ import shutil
 import random
 import os
 
-#  Seznam ID for, ktera budou prohledavana
-FORUM_IDS = [
-    #1786,   # pozornosti hodne clanky
-    #41976,  # testovaci
-    45114,  # piskoviste mrtveho papouska
-]
-
 
 def arg(argumentName):
-    return func.getArg(argumentName,"hcmf:r:")
+    return func.getArg(argumentName,"hcmf:r:s:l:L:i:")
 
 
 def dead_parrot(message=""):    
@@ -86,31 +87,32 @@ def read_feed(rozptyl):
         uveden #hastag se jmenem mesta, dopln koordinaty a uloz do struktury
     """
     records = []
-    for id in FORUM_IDS:
-        xml = _getXml("https://forum.pirati.cz/feed/topic/%s" % id)
-        entries  = [x for x in xml.getroot() if x.tag[-5:] == 'entry']
-        for entry in entries:
-            record = {}
-            cont = _dummy_child('content', entry).text.strip()
-            tags = re.findall(r'#([a-zA-Z0-9]{1,30})', cont)
-            if tags:            
-                record = {
-                    "author": _dummy_child('name',_dummy_child('author', entry)).text,
-                    "date": _dummy_child('published', entry).text,
-                    "content": cont,
-                    "tags": tags,
-                }   
-                for tag in tags:
-                    lat, lon = _get_coords(coords, tag)
-                    if lat:
-                        record["latitude"] = float(lat)
-                        record["longitude"] = float(lon)        
-                        # posun nahodne koordinaty 
-                        record["latitude"] += record["latitude"]  * rozptyl * (random.random() - 0.5)
-                        record["longitude"] += record["longitude"]  * rozptyl * (random.random() - 0.5)
-                        
-            if "latitude" in record.keys():
-                records.append(record)                
+
+    xml = _getXml("https://forum.pirati.cz/feed/topic/%s" % arg('i'))
+    entries  = [x for x in xml.getroot() if x.tag[-5:] == 'entry']
+    for entry in entries:
+        record = {}
+        cont = _dummy_child('content', entry).text.strip()
+        tags = re.findall(r'#([a-zA-Z0-9]{1,30})', cont)
+        if tags:            
+            record = {
+                "author": _dummy_child('name',_dummy_child('author', entry)).text,
+                "date": _dummy_child('published', entry).text,
+                "content": cont,
+                "tags": tags,
+            }   
+            for tag in tags:
+                lat, lon = _get_coords(coords, tag)
+                if lat:
+                    record["latitude"] = float(lat)
+                    record["longitude"] = float(lon)        
+                    # posun nahodne koordinaty 
+                    record["latitude"] += record["latitude"]  * rozptyl * (random.random() - 0.5)
+                    record["longitude"] += record["longitude"]  * rozptyl * (random.random() - 0.5)
+                    
+        if "latitude" in record.keys():
+            records.append(record)                
+
     return records
 
 
@@ -122,8 +124,8 @@ def main():
 
 
 
-def make_map( filename, rozptyl ):
-    """ Vytvor HTML stranku s mapou CR (centrovana cca havlickuv brod)
+def make_map(filename, latitude, longitude, scale, rozptyl):
+    """ Vytvor HTML stranku s mapou (ceska republika je centrovana cca havlickuv brod)
         ze vsech tagu nalezenych ve foru. Kazde znace prirad barvu podle posledniho uvedeneho tagu
     """
 
@@ -133,7 +135,7 @@ def make_map( filename, rozptyl ):
     shutil.rmtree(dirname)
     shutil.copytree('../venv/lib/python3.6/site-packages/gmplot/markers', dirname)
 
-    gmap = gmplot.GoogleMapPlotter(49.803904, 15.558176, 9)
+    gmap = gmplot.GoogleMapPlotter(latitude, longitude, scale)
 
     # dej na mapu markery
     for r in read_feed(rozptyl):
@@ -176,7 +178,12 @@ if __name__ == '__main__':
     elif arg('h'):
         dead_parrot()
     elif arg('m'):
+        if not arg('i'): 
+            dead_parrot("argument error: must specify -i")
         rozptyl = float(arg('r')) if arg('r') else 0
-        make_map(arg('f'), rozptyl)
+        scale = int(arg('s')) if arg('s') else 9
+        lat = float(arg('l')) if arg('l') else 49.80
+        lon = float(arg('L')) if arg('L') else 15.55
+        make_map(arg('f'), lat, lon, scale, rozptyl)
     else:
         main()
