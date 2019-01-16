@@ -25,19 +25,14 @@ def message_and_exit(message=""):
     exit()
 
 
-def make_graph( dbx, stat_id, filename=""):
+def make_graph( rows, stat_id, filename=""):
     """ Vytvori carovy graf. Ulozi jej do souboru,
         neni-li jmeno souboru definovano, zobrazi jej
     """    
 
-    # ziskej statistiku
-    stat = func.clsMyStat(dbx, stat_id)
-    r = stat.getLastValues(0)
-    r.reverse()
-
     # HACK: proste hnusne, prepsat pythonic way
     X, Y = [], []
-    for row in r:
+    for row in rows:
         X.append('{0:%d.%m.%Y}'.format(row[0]))
         Y.append(row[1])
 
@@ -75,7 +70,12 @@ def make_pages(dbx, dirname):
         i += 1
         print("[%s/%s]: Creating %s                       \r" % (i, len(stats), stat), end = '\r')
 
-        make_graph(dbx, stat, "%s/img/%s.png" % (dirname, stat) )
+        # ziskej statistiku
+        stat_object = func.clsMyStat(dbx, stat)
+        r = stat_object.getLastValues(0)
+        r.reverse()
+
+        make_graph(r, stat, "%s/img/%s.png" % (dirname, stat) )
         
         # najdi pro ID statistiky odpovidajici radek ve statnames, 
         # nacti z nej nazev, dulezitost...
@@ -87,11 +87,17 @@ def make_pages(dbx, dirname):
         else:
             important = False
 
+        # vytvor html soubor se zobrazenim statistiky
         page = func.replace_all(func.readfile('../templates/stat.htm'),
             { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % stat,
               '%stat_date%': '{0:%d.%m.%Y}'.format(datetime.datetime.now()) } )
         func.writefile(page, "%s/%s.htm" % (dirname, stat))    
         index[0 if important else 1] += "<a href='%s.htm'>%s</a>, \n" % (stat, statname)
+        
+        # vytvor CSV soubor se zdrojovymi daty
+        csv_rows = [ "%s;%s;%s;" % (stat, "{:%d.%m.%Y}".format(x[0]), x[1]) for x in r ]
+        func.writefile("stat_id;date;value;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, stat))    
+
 
     page = func.replace_all(func.readfile('../templates/index.htm'), { '%important%': index[0], '%body%': index[1] } )
     func.writefile(page, "%s/index.htm" % dirname)    
@@ -108,7 +114,7 @@ def dummy_backup_db(dbx, dirname):
     func.makedir(dirname)
     
     s = func.clsMyStat(dbx, '')
-    for stat in s.getAllStats(): 
+    for stat in s.getAllStats():
         stat_object = func.clsMyStat(dbx, stat)
         r = stat_object.getLastValues(0)
         r = [ "\t".join(('{0:%d.%m.%Y}'.format(x[0]), str(x[1]))) for x in r]
