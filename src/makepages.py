@@ -90,7 +90,7 @@ def make_pages(dbx, dirname):
         # vytvor html soubor se zobrazenim statistiky
         page = func.replace_all(func.readfile('../templates/stat.htm'),
             { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % stat,
-              '%stat_id%': stat, '%stat_date%': '{0:%d.%m.%Y}'.format(datetime.datetime.now()) } )
+              '%stat_id%': stat, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
         func.writefile(page, "%s/%s.htm" % (dirname, stat))    
         index[0 if important else 1] += "<a href='%s.htm'>%s</a>, \n" % (stat, statname)
         
