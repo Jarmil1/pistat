@@ -48,6 +48,12 @@ YOUTUBERS = {
     "YOUTUBE_ANO2011_SUBSCRIBERS": "https://www.youtube.com/user/anobudelip",
 }
 
+# sledovane twitters ucty. k ID statistiky je doplnen suffix _FOLLOWRS a _TWEETS
+TWITTERS = {
+    "TWITTER_PIRATI": "https://twitter.com/PiratskaStrana",
+    "TWITTER_KSCM": "https://twitter.com/czKSCM",
+}
+
 def arg(argumentName):
     return getArg(argumentName,"tvqs:p:ha")
 
@@ -146,12 +152,18 @@ def main():
         content = getUrlContent(YOUTUBERS[id])
         m = re.findall(r'([\xa00-9]+)[ ]+odb.{1,1}ratel', content)
         value = re.sub(r'\xa0','',m[0]) if m else 0
-        Stat(dbx, id, value, id)
+        Stat(dbx, id, value, 0, id)
 
+    # pocty followeru a tweetu ve vybranych twitter kanalech
+    for id in TWITTERS:
+        content = getUrlContent(TWITTERS[id])
+        m = re.findall(r'data-count=([0-9]*)', content)
+        if m:
+            Stat(dbx, id + "_FOLLOWERS", m[2], 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
+            Stat(dbx, id + "_TWEETS", m[0], 0, id + " Tweets")         # hack dtto    
     
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
-    
     pass   
 
 
