@@ -161,13 +161,9 @@ def html_map(lat, lon, scale, markers):
 def make_map(filename, latitude, longitude, scale, rozptyl):
     """ Vytvor HTML stranku s mapou ze vsech tagu nalezenych ve foru. Znackam prirad obrazek, existuje-li"""
 
-    # markery je treba prekopirovat do vysledneho adresare...
+    # markery je treba prekopirovat do vysledneho adresare
     dirname = os.path.dirname(filename) + "/markers"
-    func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
-    shutil.rmtree(dirname)
-    shutil.copytree('../venv/lib/python3.6/site-packages/gmplot/markers', dirname)
-
-    # ...vcetne vlastnich markeru
+    func.makedir(dirname)   
     my_markers_path = '../templates/markers/'
     for file_name in os.listdir(my_markers_path):
         full_file_name = os.path.join(my_markers_path, file_name)
