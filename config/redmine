@@ -1,0 +1,12 @@
+# testovaci, neni integrovano:
+#
+# seznam front na redmine, jejichz pocet ukolu bude sledovan do statistik
+# prazdne radky a radky zacinajici plotem se ignoruji
+# ostatni radky ve tvaru: <IDSTAT> <URL redmine vlakna>
+# do statistiky REDMINE_<IDSTAT> se ulozi pocet ukolu ve vlaknu
+
+# pocet schuzek
+PHA_ZAST_SCHUZEK   https://redmine.pirati.cz/projects/praha/issues.atom?key=02f55cd52448867dc85f5fa99b403abdabfb0ddf&set_filter=1&status_id=c&tracker_id=13
+
+# pocet dokoncenych ukolu
+PHA_ZAST_DOKO      https://redmine.pirati.cz/projects/praha/issues.atom?key=02f55cd52448867dc85f5fa99b403abdabfb0ddf&set_filter=1&status_id=c&tracker_id=2

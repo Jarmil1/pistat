@@ -28,13 +28,12 @@
     -sVal  scale, rozsah cca 1..20. Default: 9 (velikost CR)
     -lVal  latitude, default 49.80
     -LVal  longitude, default 15.55 (cca koordinaty havlickova brodu)
-    
+
 """
 
 from func import *
 import func
 import re 
-from xml.etree import ElementTree as ET
 import shutil
 import random
 import os
@@ -89,16 +88,6 @@ def dead_parrot(message=""):
     exit()
 
 
-def _getXml(url):
-    try:
-        with urllib.request.urlopen(url) as fn:
-            xml = ET.parse(fn)
-        fn.close()	
-        return xml
-    except:
-        return None
-
-
 def _dummy_child(name, element):
     """ Vrat prvni XML element, jehoz tag konci na 'name'.
         HACK kvuli dekorovanym jmenum tagu: obsahuji {atom}
@@ -126,8 +115,7 @@ def read_feed(rozptyl):
     """
     records = []
 
-    xml = _getXml("https://forum.pirati.cz/feed/topic/%s" % arg('i'))
-    entries  = [x for x in xml.getroot() if x.tag[-5:] == 'entry']
+    entries = func.atom_entries("https://forum.pirati.cz/feed/topic/%s" % arg('i'))
     for entry in entries:
         record = {}
         cont = _dummy_child('content', entry).text.strip()

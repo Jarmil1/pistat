@@ -6,6 +6,7 @@ import random, re, getopt, sys
 import urllib.request
 import mysql.connector
 import os
+from xml.etree import ElementTree as ET
 
 statList = []   # zde ukladej seznam vsech vygenerovanych statistik
 
@@ -182,4 +183,14 @@ def replace_all(string, replaces):
     return string
     
     
-    
+def atom_entries(url):
+    """ Vrat seznam XML elementu 'entry' z atom feedu s adresou URL """
+    try:
+        with urllib.request.urlopen(url) as fn:
+            xml = ET.parse(fn)
+        fn.close()	
+    except:
+        return None
+        
+    entries  = [x for x in xml.getroot() if x.tag[-5:] == 'entry']
+    return entries
