@@ -40,7 +40,13 @@ PIRATI_KS = {
     "PI_MEMBERS_NEZARAZENI": "https://forum.pirati.cz/memberlist.php?mode=group&g=437"
     }
 
-
+# sledovane youtube kanaly
+YOUTUBERS = {
+    "YOUTUBE_PIRATI_SUBSCRIBERS": "https://www.youtube.com/channel/UC_zxYLGrkmrYazYt0MzyVlA",
+    "YOUTUBE_TOP09_SUBSCRIBERS": "https://www.youtube.com/user/topvidea",
+    "YOUTUBE_ODS_SUBSCRIBERS": "https://www.youtube.com/user/tvods",
+    "YOUTUBE_ANO2011_SUBSCRIBERS": "https://www.youtube.com/user/anobudelip",
+}
 
 def arg(argumentName):
     return getArg(argumentName,"tvqs:p:ha")
@@ -132,12 +138,20 @@ def main():
         sum += statNrOfMembers(id, PIRATI_KS[id])
     Stat(dbx, "PI_MEMBERS_TOTAL", sum, 0, 'Pocet clenu CPS celkem')			
 
+    # piratske forum
     stat_forum()
     
+    # pocty odberatelu vybranych Youtube kanalu
+    for id in YOUTUBERS:
+        content = getUrlContent(YOUTUBERS[id])
+        m = re.findall(r'([\xa00-9]+)[ ]+odb.{1,1}ratel', content)
+        value = re.sub(r'\xa0','',m[0]) if m else 0
+        Stat(dbx, id, value, id)
 
     
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
+    
     pass   
 
 
