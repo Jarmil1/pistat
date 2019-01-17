@@ -48,11 +48,14 @@ YOUTUBERS = {
     "YOUTUBE_ANO2011_SUBSCRIBERS": "https://www.youtube.com/user/anobudelip",
 }
 
-# sledovane twitters ucty. k ID statistiky je doplnen suffix _FOLLOWRS a _TWEETS
-TWITTERS = {
-    "TWITTER_PIRATI": "https://twitter.com/PiratskaStrana",
-    "TWITTER_KSCM": "https://twitter.com/czKSCM",
-}
+# sledovane twitters ucty. ze jmena uctu, napr "PiratskaStrana",
+# jsou vytvoreny statistiky TWITTER_PIRATSKASTRANA_FOLLOWERS a TWITTER_PIRATSKASTRANA_TWEETS
+TWITTERS = [
+    "PiratskaStrana", "piratipraha", "Piratske_listy",      # pirati - organizace
+    "PiratIvanBartos", "JakubMichalek19", "olgarichterova", # pirati - osobnosti
+    "ondrej_profant", "vonpecka",
+    "czKSCM",               # konkurence
+]
 
 def arg(argumentName):
     return getArg(argumentName,"tvqs:p:ha")
@@ -151,19 +154,26 @@ def main():
     for id in YOUTUBERS:
         content = getUrlContent(YOUTUBERS[id])
         m = re.findall(r'([\xa00-9]+)[ ]+odb.{1,1}ratel', content)
-        value = re.sub(r'\xa0','',m[0]) if m else 0
+        value = int(re.sub(r'\xa0','',m[0])) if m else 0
         Stat(dbx, id, value, 0, id)
 
     # pocty followeru a tweetu ve vybranych twitter kanalech
     for id in TWITTERS:
-        content = getUrlContent(TWITTERS[id])
+        content = getUrlContent("https://twitter.com/%s" % id)
         m = re.findall(r'data-count=([0-9]*)', content)
         if m:
-            Stat(dbx, id + "_FOLLOWERS", m[2], 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
-            Stat(dbx, id + "_TWEETS", m[0], 0, id + " Tweets")         # hack dtto    
+            Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
+            Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, id + " Tweets")         # hack dtto    
     
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
+    for id in TWITTERS:
+        content = getUrlContent("https://twitter.com/%s" % id)
+        m = re.findall(r'data-count=([0-9]*)', content)
+        if m:
+            Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
+            Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, id + " Tweets")         # hack dtto    
+
     pass   
 
 
