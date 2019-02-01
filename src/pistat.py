@@ -53,7 +53,7 @@ YOUTUBERS = {
 TWITTERS = [
     "PiratskaStrana", "piratipraha", "Piratske_listy",      # pirati - organizace
     "PiratIvanBartos", "JakubMichalek19", "olgarichterova", # pirati - osobnosti
-    "ondrej_profant", "vonpecka",
+    "ondrej_profant", "vonpecka", "JiriUlip",
     "czKSCM",               # konkurence
 ]
 
