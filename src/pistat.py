@@ -48,14 +48,6 @@ YOUTUBERS = {
     "YOUTUBE_ANO2011_SUBSCRIBERS": "https://www.youtube.com/user/anobudelip",
 }
 
-# sledovane twitters ucty. ze jmena uctu, napr "PiratskaStrana",
-# jsou vytvoreny statistiky TWITTER_PIRATSKASTRANA_FOLLOWERS a TWITTER_PIRATSKASTRANA_TWEETS
-TWITTERS = [
-    "PiratskaStrana", "piratipraha", "Piratske_listy",      # pirati - organizace
-    "PiratIvanBartos", "JakubMichalek19", "olgarichterova", # pirati - osobnosti
-    "ondrej_profant", "vonpecka", "JiriUlip",
-    "czKSCM",               # konkurence
-]
 
 def arg(argumentName):
     return getArg(argumentName,"tvqs:p:ha")
@@ -158,7 +150,8 @@ def main():
         Stat(dbx, id, value, 0, id)
 
     # pocty followeru a tweetu ve vybranych twitter kanalech
-    for id in TWITTERS:
+    twitter_accounts = list(set(filter(lambda x: (not x.strip().startswith('#')) and (x.strip()), readfile('../config/twitters').split('\n'))))[:200]
+    for id in twitter_accounts:
         content = getUrlContent("https://twitter.com/%s" % id)
         m = re.findall(r'data-count=([0-9]*)', content)
         if m:
@@ -167,14 +160,7 @@ def main():
     
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
-    for id in TWITTERS:
-        content = getUrlContent("https://twitter.com/%s" % id)
-        m = re.findall(r'data-count=([0-9]*)', content)
-        if m:
-            Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
-            Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, id + " Tweets")         # hack dtto    
-
-    pass   
+    pass    
 
 
 if __name__ == '__main__': 
