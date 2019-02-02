@@ -89,7 +89,7 @@ def make_pages(dbx, dirname):
     s = func.clsMyStat(dbx, '')
     stats = s.getAllStats()
     
-    statnames = func.readfile('../config/statnames').split('\n')
+    statnames = func.getconfig('../config/statnames')
 
     i, index = 0, ['','']
 

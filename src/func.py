@@ -194,3 +194,14 @@ def atom_entries(url):
         
     entries  = [x for x in xml.getroot() if x.tag[-5:] == 'entry']
     return entries
+
+    
+def getconfig(filename):
+    ''' Vrat list radku v konfiguracnim souboru filename, bez komentaru
+        a prazdnych radku, bez duplicit, radky orezane o whitespaces, 
+        v nahodnem poradi
+    '''    
+    return list(set(filter(
+        lambda x: (not x.strip().startswith('#')) and (x.strip()), 
+        readfile(filename).split('\n'))))
+        
