@@ -161,6 +161,7 @@ def main():
     
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
+    print(func.getconfig('../config/twitters'))
     pass    
 
 

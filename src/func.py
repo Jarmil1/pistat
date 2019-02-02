@@ -201,7 +201,7 @@ def getconfig(filename):
         a prazdnych radku, bez duplicit, radky orezane o whitespaces, 
         v nahodnem poradi
     '''    
-    return list(set(filter(
+    x = list(set(filter(
         lambda x: (not x.strip().startswith('#')) and (x.strip()), 
         readfile(filename).split('\n'))))
-        
+    return list(map(str.strip, x))
