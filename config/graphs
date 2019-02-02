@@ -1,0 +1,23 @@
+# definice vystupnich grafu, slozenych z vice ciselnych rad
+#
+# prazdne radky a radky zacinajici znakem # (jako je tento) jsou ignorovany
+#
+# Kazdy graf definuj na jednom radku:
+#  - nejprve uved ID vysledne statistiky, napr MESTA
+#  - pote ID tech statistik, ktere maji v grafu byt, napr PRAHA BRNO
+# Hodnoty jsou oddeleny nejmene jednou mezerou.
+# Priklad :
+# MESTA PRAHA BRNO OSTRAVA
+#
+#
+
+# spolecne grafy tweetujicich poslancu, zatim jen nekterych, nahodny vyber
+POSLANCI_TWEETS TWITTER_PiratIvanBartos_TWEETS TWITTER_JakubMichalek19_TWEETS TWITTER_VPikal_TWEETS TWITTER_ondrej_profant_TWEETS TWITTER_Mikiferjencik_TWEETS
+POSLANCI_FOLLOWERS TWITTER_PiratIvanBartos_FOLLOWERS TWITTER_JakubMichalek19_FOLLOWERS TWITTER_VPikal_FOLLOWERS TWITTER_ondrej_profant_FOLLOWERS TWITTER_Mikiferjencik_FOLLOWERS
+
+# porovnani piratu a konkurence
+STRANY_TWEETS TWITTER_PiratskaStrana_TWEETS TWITTER_czKSCM_TWEETS
+STRANY_FOLLOWERS TWITTER_PiratskaStrana_FOLLOWERS TWITTER_czKSCM_FOLLOWERS
+
+# juuutuuub
+YOUTUBE_STRANY_SUBSCRIBERS YOUTUBE_PIRATI_SUBSCRIBERS YOUTUBE_ODS_SUBSCRIBERS YOUTUBE_TOP09_SUBSCRIBERS YOUTUBE_ANO2011_SUBSCRIBERS

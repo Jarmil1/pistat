@@ -15,7 +15,7 @@ import credentials
 import shutil
 import re
 
-LINE_COLORS = ('b', 'g', 'r', 'c', 'k')
+LINE_COLORS = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
 
 def arg(argumentName):
     return func.getArg(argumentName,"ho:b:")
@@ -28,7 +28,7 @@ def message_and_exit(message=""):
     exit()
 
 
-def make_graph( rowlist, stat_id, filename=""):
+def make_graph( rowlist, filename=""):
     """ Vytvori carovy graf. Ulozi jej do souboru,
         neni-li jmeno souboru definovano, zobrazi jej
         rowlist .. list s datovymi radami
@@ -93,28 +93,46 @@ def make_pages(dbx, dirname):
 
     i, index = 0, ['','']
 
-    # Statistiky twitteru: kombinuj do spolecneho grafu TWEETS & FOLLOWERS
+    # vytvor ve dvou krocich seznam vsech kombinovanych grafu:
+    
+    # 1) nacti ty z konfigurace, preved na hashtabulku
+    mixed_graphs = {}
+    for line in func.getconfig('../config/graphs'):
+        lineparts = list(map(str.strip,line.split(' ')))
+        mixed_graphs[lineparts[0]] = lineparts[1:]
+    
+    # 2) pridej automaticky vytvarene twitter kombinovane grafy
+    # TWEETS a FOLLOWERS
     for stat in stats: 
         found = re.search(r'TWITTER_(.+?)_TWEETS', stat)
         if found: 
-            statname = "TWITTER_%s" % found.group(1)
-            print("Creating %s                       \r" % (statname), end = '\r')
+            mixed_graphs["TWITTER_%s" % found.group(1)] = \
+                [ stat, "TWITTER_%s_FOLLOWERS" % found.group(1) ]
+
+
+    # Vytvor vsechny kombinovane grafy, vynech statistiky s nejvyse jednou hodnotou
+    for statname in mixed_graphs: 
+
+        # graf
+        involved_stats = {}
+        for invstat in mixed_graphs[statname]:
+            involved_stats[invstat] = get_stat_for_graph(dbx, invstat)
+        
+        if len(list(involved_stats.values())[0])>1:
+
+            print("Creating combined graph %s                       \r" % (statname), end = '\r')
+            make_graph( involved_stats, "%s/img/%s.png" % (dirname, statname) )
             
-            # graf
-            data_tweets = get_stat_for_graph(dbx, stat)
-            data_followers = get_stat_for_graph(dbx, "TWITTER_%s_FOLLOWERS" % found.group(1))
-            make_graph( { "TWEETS": data_tweets, "FOLLOWERS": data_followers }, stat, "%s/img/%s.png" % (dirname, statname) )
-            
-            # html stranka: bez zdrojovych dat
+            # html stranka: bez CSV zdrojovych dat
             page = func.replace_all(func.readfile('../templates/stat_nodata.htm'),
                 { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % statname,
                 '%stat_id%': statname, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
             func.writefile(page, "%s/%s.htm" % (dirname, statname))    
             
             index[1] += "<a href='%s.htm'>%s</a>, \n" % (statname, statname)
-        
-    #exit()    
 
+
+    # vytvor stranky pro vsechny statistiky, vynech twittery a statistiky s nejvyse jednou hodnotou
     for stat in stats: 
         i += 1
         print("[%s/%s]: Creating %s                       \r" % (i, len(stats), stat), end = '\r')
@@ -123,28 +141,29 @@ def make_pages(dbx, dirname):
 
             # ziskej statistiku a vytvor graf
             r = get_stat_for_graph(dbx, stat)
-            make_graph({ "graph": r }, stat, "%s/img/%s.png" % (dirname, stat) )
-            
-            # najdi pro ID statistiky odpovidajici radek ve statnames, 
-            # nacti z nej nazev, dulezitost...
-            info = list(filter(lambda x: x.startswith('%s\t' % stat ), statnames))
-            statname = info[0].split('\t')[1] if info else stat
-            if statname.startswith('!'):
-                important = True
-                statname = statname[1:]
-            else:
-                important = False
+            if len(r)>1:
+                make_graph({ "graph": r }, "%s/img/%s.png" % (dirname, stat) )
+                
+                # najdi pro ID statistiky odpovidajici radek ve statnames, 
+                # nacti z nej nazev, dulezitost...
+                info = list(filter(lambda x: x.startswith('%s\t' % stat ), statnames))
+                statname = info[0].split('\t')[1] if info else stat
+                if statname.startswith('!'):
+                    important = True
+                    statname = statname[1:]
+                else:
+                    important = False
 
-            # vytvor html soubor se zobrazenim statistiky
-            page = func.replace_all(func.readfile('../templates/stat.htm'),
-                { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % stat,
-                  '%stat_id%': stat, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
-            func.writefile(page, "%s/%s.htm" % (dirname, stat))    
-            index[0 if important else 1] += "<a href='%s.htm'>%s</a>, \n" % (stat, statname)
-            
-            # vytvor CSV soubor se zdrojovymi daty
-            csv_rows = [ "%s;%s;%s;" % (stat, "{:%d.%m.%Y}".format(x[0]), x[1]) for x in r ]
-            func.writefile("stat_id;date;value;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, stat))    
+                # vytvor html soubor se zobrazenim statistiky
+                page = func.replace_all(func.readfile('../templates/stat.htm'),
+                    { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % stat,
+                      '%stat_id%': stat, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
+                func.writefile(page, "%s/%s.htm" % (dirname, stat))    
+                index[0 if important else 1] += "<a href='%s.htm'>%s</a>, \n" % (stat, statname)
+                
+                # vytvor CSV soubor se zdrojovymi daty
+                csv_rows = [ "%s;%s;%s;" % (stat, "{:%d.%m.%Y}".format(x[0]), x[1]) for x in r ]
+                func.writefile("stat_id;date;value;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, stat))    
 
 
     page = func.replace_all(func.readfile('../templates/index.htm'), { '%important%': index[0], '%body%': index[1] } )
