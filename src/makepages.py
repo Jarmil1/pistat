@@ -33,15 +33,15 @@ def make_graph( rowlist, filename=""):
         neni-li jmeno souboru definovano, zobrazi jej
         rowlist .. list s datovymi radami
     """    
-
+    
     # HACK: proste hnusne, prepsat pythonic way
     datarows = {}
-    for rows in rowlist.keys():
+    for rowname in rowlist.keys():
         X, Y = [], []
-        for row in rowlist[rows]:
+        for row in rowlist[rowname]:
             X.append('{0:%d.%m.%Y}'.format(row[0]))
             Y.append(row[1])
-        datarows[rows] = (X,Y)
+        datarows[rowname] = (X,Y)
 
     # create graph
     figure(num=None, figsize=(16, 10), dpi=80, facecolor='w', edgecolor='w')
@@ -89,81 +89,82 @@ def make_pages(dbx, dirname):
     s = func.clsMyStat(dbx, '')
     stats = s.getAllStats()
     
-    statnames = func.getconfig('../config/statnames')
+    i, index, statnames = 0, ['',''], {}
 
-    i, index = 0, ['','']
-
-    # vytvor ve dvou krocich seznam vsech kombinovanych grafu:
+    # vytvor ve trech krocich seznam vsech generovanych grafu:
     
     # 1) nacti ty z konfigurace, preved na hashtabulku
     mixed_graphs = {}
     for line in func.getconfig('../config/graphs'):
         lineparts = list(map(str.strip,line.split(' ')))
         mixed_graphs[lineparts[0]] = lineparts[1:]
+        statnames[lineparts[0]] = "!" + lineparts[0]
     
     # 2) pridej automaticky vytvarene twitter kombinovane grafy
     # TWEETS a FOLLOWERS
     for stat in stats: 
         found = re.search(r'TWITTER_(.+?)_TWEETS', stat)
         if found: 
-            mixed_graphs["TWITTER_%s" % found.group(1)] = \
-                [ stat, "TWITTER_%s_FOLLOWERS" % found.group(1) ]
+            mixed_graphs["TWITTER_%s" % found.group(1)] = [ stat, "TWITTER_%s_FOLLOWERS" % found.group(1) ]
+            statnames["TWITTER_%s" % found.group(1)] = "Twitter %s" % found.group(1) # default name
 
-
+    # 3) pridej vsechny ostatni statistiky, vynechej TWITTERY
+    # vytvor ponekud nesystemove defaultni nazvy
+    for stat in stats: 
+        if not re.search(r'TWITTER_(.+)', stat):
+            mixed_graphs[stat] = [ stat ]
+            found = re.search(r'BALANCE_(.+)', stat)
+            if found: 
+                statnames[stat] = "Zůstatek %s" % found.group(1) 
+            found = re.search(r'PI_MEMBERS_(.+)', stat)
+            if found: 
+                statnames[stat] = "Počet členů %s" % found.group(1) 
+                
+    # donacti jmena statistik z konfigurace
+    for line in func.getconfig('../config/statnames'):
+        try:
+            (a, b) = line.split('\t',2)
+            statnames[a] = b
+        except ValueError:
+            pass
+            
     # Vytvor vsechny kombinovane grafy, vynech statistiky s nejvyse jednou hodnotou
-    for statname in mixed_graphs: 
+    for statid in mixed_graphs: 
+
+        i += 1
 
         # graf
         involved_stats = {}
-        for invstat in mixed_graphs[statname]:
+        for invstat in mixed_graphs[statid]:
             involved_stats[invstat] = get_stat_for_graph(dbx, invstat)
-        
-        if max(list(map(len,involved_stats.values()))) > 1: # involved_stats musi obsahovat aspon jednu radu o 2 nebo vice hodnotach
-
-            print("Creating combined graph %s                       \r" % (statname), end = '\r')
-            make_graph( involved_stats, "%s/img/%s.png" % (dirname, statname) )
             
-            # html stranka: bez CSV zdrojovych dat
-            page = func.replace_all(func.readfile('../templates/stat_nodata.htm'),
-                { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % statname,
-                '%stat_id%': statname, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
-            func.writefile(page, "%s/%s.htm" % (dirname, statname))    
+        singlestat = (len(involved_stats.values()) == 1)
             
-            index[1] += "<a href='%s.htm'>%s</a>, \n" % (statname, statname)
+        if max(list(map(len,involved_stats.values()))) > 1: # involved_stats musi obsahovat aspon 1 radu o >=2 hodnotach
 
+            print("[%s/%s]: Creating %s                       \r" % (i, len(mixed_graphs), statid), end = '\r')
+            make_graph( involved_stats, "%s/img/%s.png" % (dirname, statid) )
+            
+            # najdi nazev statistiky, dulezitost...
+            statname = statnames[statid] if statid in statnames.keys() else statid
+            if statname.startswith('!'):
+                important = True
+                statname = statname[1:]
+            else:
+                important = False
 
-    # vytvor stranky pro vsechny statistiky, vynech twittery a statistiky s nejvyse jednou hodnotou
-    for stat in stats: 
-        i += 1
-        print("[%s/%s]: Creating %s                       \r" % (i, len(stats), stat), end = '\r')
-        
-        if not re.search(r'TWITTER_(.+)', stat):
+            # html stranka
+            page = func.replace_all(func.readfile('../templates/stat.htm' if singlestat else '../templates/stat_nodata.htm' ),
+                { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % statid,
+                '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
+            func.writefile(page, "%s/%s.htm" % (dirname, statid))    
+            
+            index[0 if important else 1] += "<a href='%s.htm'>%s</a>, \n" % (statid, statname)
 
-            # ziskej statistiku a vytvor graf
-            r = get_stat_for_graph(dbx, stat)
-            if len(r)>1:
-                make_graph({ "graph": r }, "%s/img/%s.png" % (dirname, stat) )
-                
-                # najdi pro ID statistiky odpovidajici radek ve statnames, 
-                # nacti z nej nazev, dulezitost...
-                info = list(filter(lambda x: x.startswith('%s\t' % stat ), statnames))
-                statname = info[0].split('\t')[1] if info else stat
-                if statname.startswith('!'):
-                    important = True
-                    statname = statname[1:]
-                else:
-                    important = False
-
-                # vytvor html soubor se zobrazenim statistiky
-                page = func.replace_all(func.readfile('../templates/stat.htm'),
-                    { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % stat,
-                      '%stat_id%': stat, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
-                func.writefile(page, "%s/%s.htm" % (dirname, stat))    
-                index[0 if important else 1] += "<a href='%s.htm'>%s</a>, \n" % (stat, statname)
-                
-                # vytvor CSV soubor se zdrojovymi daty
-                csv_rows = [ "%s;%s;%s;" % (stat, "{:%d.%m.%Y}".format(x[0]), x[1]) for x in r ]
-                func.writefile("stat_id;date;value;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, stat))    
+            # vytvor CSV soubor se zdrojovymi daty
+            if singlestat:
+                csv_rows = [ "%s;%s;%s;" % (statid, "{:%d.%m.%Y}".format(x[0]), x[1]) for x in list(involved_stats.values())[0] ]
+                func.writefile("stat_id;date;value;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, statid))    
 
 
     page = func.replace_all(func.readfile('../templates/index.htm'), { '%important%': index[0], '%body%': index[1] } )
