@@ -166,7 +166,18 @@ def main():
     
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
-    pass    
+    twitter_accounts = func.getconfig('../config/twitters')[:200]
+    for id in twitter_accounts:
+        content = func.getUrlContent("https://twitter.com/%s" % id)
+        m = re.findall(r'data-count=([0-9]*)', content)
+        if m:
+            func.Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
+            func.Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, id + " Tweets")         # hack dtto    
+            if len(m)>3:
+                func.Stat(dbx, "TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, id + " Likes")          # hack dtto    
+            else: 
+                print(id, "skipped, no likes found")
+
 
 
 if __name__ == '__main__': 
