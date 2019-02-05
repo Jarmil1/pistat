@@ -118,7 +118,7 @@ def make_pages(dbx, dirname):
         for invstat in mixed_graphs[statname]:
             involved_stats[invstat] = get_stat_for_graph(dbx, invstat)
         
-        if len(list(involved_stats.values())[0])>1:
+        if max(list(map(len,involved_stats.values()))) > 1: # involved_stats musi obsahovat aspon jednu radu o 2 nebo vice hodnotach
 
             print("Creating combined graph %s                       \r" % (statname), end = '\r')
             make_graph( involved_stats, "%s/img/%s.png" % (dirname, statname) )
