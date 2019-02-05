@@ -158,10 +158,10 @@ def main():
         if m:
             func.Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
             func.Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, id + " Tweets")         # hack dtto    
+            func.Stat(dbx, "TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, id + " Tweets")          # hack dtto    
     
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
-    print(func.getconfig('../config/twitters'))
     pass    
 
 
