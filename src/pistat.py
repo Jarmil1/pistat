@@ -43,10 +43,10 @@ PIRATI_KS = {
 
 # sledovane youtube kanaly
 YOUTUBERS = {
-    "YOUTUBE_PIRATI_SUBSCRIBERS": "https://www.youtube.com/channel/UC_zxYLGrkmrYazYt0MzyVlA",
-    "YOUTUBE_TOP09_SUBSCRIBERS": "https://www.youtube.com/user/topvidea",
-    "YOUTUBE_ODS_SUBSCRIBERS": "https://www.youtube.com/user/tvods",
-    "YOUTUBE_ANO2011_SUBSCRIBERS": "https://www.youtube.com/user/anobudelip",
+    "YOUTUBE_PIRATI": [ "https://www.youtube.com/channel/UC_zxYLGrkmrYazYt0MzyVlA", "https://www.youtube.com/user/CeskaPiratskaStrana/about" ],
+    "YOUTUBE_TOP09": [ "https://www.youtube.com/user/topvidea", "https://www.youtube.com/user/topvidea/about" ], 
+    "YOUTUBE_ODS": [ "https://www.youtube.com/user/tvods", "https://www.youtube.com/user/tvods/about" ],
+    "YOUTUBE_ANO2011": [ "https://www.youtube.com/user/anobudelip", "https://www.youtube.com/user/anobudelip/about" ],
 }
 
 
@@ -110,10 +110,6 @@ def message_and_exit(message=""):
     exit()
 
 
-##############################################################################################################
-# KOD
-##############################################################################################################
-
 def main():
 
     # testovaci nahodna hodnota
@@ -145,10 +141,17 @@ def main():
     
     # pocty odberatelu vybranych Youtube kanalu
     for id in YOUTUBERS:
-        content = func.getUrlContent(YOUTUBERS[id])
+        # odberatelu
+        content = func.getUrlContent(YOUTUBERS[id][0])
         m = re.findall(r'([\xa00-9]+)[ ]+odb.{1,1}ratel', content)
         value = int(re.sub(r'\xa0','',m[0])) if m else 0
-        func.Stat(dbx, id, value, 0, id)
+        func.Stat(dbx, id + '_SUBSCRIBERS', value, 0, id + '_SUBSCRIBERS')
+        
+        # shlednuti
+        content = func.getUrlContent(YOUTUBERS[id][1])
+        m = re.findall(r'<b>([\xa00-9]+)</b> zhl.{1,1}dnut', content)
+        value = int(re.sub(r'\xa0','',m[0])) if m else 0
+        func.Stat(dbx, id + '_VIEWS', value, 0, id + '_VIEWS')
 
     # pocty followeru a tweetu ve vybranych twitter kanalech
     twitter_accounts = func.getconfig('../config/twitters')[:200]
@@ -159,6 +162,7 @@ def main():
             func.Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
             func.Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, id + " Tweets")         # hack dtto    
             func.Stat(dbx, "TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, id + " Tweets")          # hack dtto    
+
     
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
