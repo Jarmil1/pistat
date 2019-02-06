@@ -49,6 +49,9 @@ def make_graph( rowlist, filename=""):
     """    
 
     rowlist_count = len(rowlist)
+    
+    print(rowlist)
+    exit()
 
     # create graph
     figure(num=None, figsize=(16, 10), dpi=80, facecolor='w', edgecolor='w')
