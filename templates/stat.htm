@@ -74,8 +74,8 @@ td.blvl-3 {padding-left:6em}
     <div class="container">
       <nav class="navbar navbar-expand-lg navbar-light">
       <a class="navbar-brand" href="index.htm">
-      <img src="assets/logo_napis.svg" alt="Česká pirátská strana" class="d-inline-block align-top pr-3" height="40"></a>
-      <a class="navbar-brand pr-5 fixed-width" href="index.htm">Pi<span class="ishow">rátské </span>STAT<span class="ishow">istiky</span></a>
+      <img src="assets/logo_napis.png" alt="Česká pirátská strana" class="d-inline-block align-top pr-3" height="40"></a>
+      <a class="navbar-brand fixed-width" href="index.htm"><big><big>Pirátské statistiky</big></big></a>
 
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -97,9 +97,13 @@ td.blvl-3 {padding-left:6em}
 
                 <div class="o-section-inner">
                     <div class="o-section-block" data-equalizer="" data-equalize-on="medium">
-                      <h3>%stat_name%</h3>
+                      <h1>%stat_name% - %stat_type%</h1>
                       <br>
-                      <p>%stat_desc%</p>
+                      <p>
+                      <a href="%stat_id%.delta.htm">Denní přírůstky (delta alias heartbeat)</a> | 
+                      <a href="%stat_id%.htm">Trendy (absolutní hodnoty)</a>
+                      <br>
+                      %stat_desc%</p>
                     </div>
                   </div>
 

@@ -156,7 +156,7 @@ def make_pages(dbx, dirname):
         paragraph = ''
         for statid in groups[groupname]:
             statname = statnames[statid] if statid in statnames.keys() else statid
-            paragraph += html.a("%s.htm" % statid, statname) + '\n'
+            paragraph += html.a("%s.delta.htm" % statid, statname) + '\n'
         mybody += html.h2(groupname) + html.p(paragraph)
         
     page = func.replace_all(func.readfile('../templates/index.htm'), { '%body%': mybody } )
@@ -173,9 +173,13 @@ def make_pages(dbx, dirname):
         for invstat in mixed_graphs[statid]:
             tmpstat = get_stat_for_graph(dbx, invstat)
             involved_stats[invstat] = tmpstat
-            print(tmpstat)
-            exit()
-            #involved_stats[invstat] = tmpstat
+            
+            # spocitej delta statistiku 
+            deltastat, lastvalue = [], None
+            for entry in tmpstat:
+                deltastat.append([entry[0], 0 if lastvalue is None else entry[1] - lastvalue])
+                lastvalue = entry[1]
+            involved_deltas[invstat] = deltastat
             
         singlestat = (len(involved_stats.values()) == 1)
             
@@ -193,9 +197,14 @@ def make_pages(dbx, dirname):
             bottom_links += html.a("index.htm", "Všechny statistiky")
             page = func.replace_all(func.readfile('../templates/stat.htm'),
                 { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % statid,
-                '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()),
-                        '%bottomlinks%': bottom_links } )
+                  '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()),
+                  '%bottomlinks%': bottom_links, '%stat_type%': "Absolutní hodnoty" } )
             func.writefile(page, "%s/%s.htm" % (dirname, statid))    
+            page = func.replace_all(func.readfile('../templates/stat.htm'),
+                { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.delta.png" % statid,
+                '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()),
+                  '%bottomlinks%': bottom_links, '%stat_type%': "Denní přírůstky (delta)" } )
+            func.writefile(page, "%s/%s.delta.htm" % (dirname, statid))    
 
             # vytvor CSV soubor se zdrojovymi daty
             if singlestat:
