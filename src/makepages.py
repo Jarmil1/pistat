@@ -163,28 +163,32 @@ def make_pages(dbx, dirname):
     func.writefile(page, "%s/index.htm" % dirname)    
     shutil.copytree('../templates/assets', "%s/assets" % dirname)
 
-            
     # Vytvor vsechny kombinovane grafy, vynech statistiky s nejvyse jednou hodnotou
     for statid in mixed_graphs: 
 
         i += 1
 
         # graf
-        involved_stats = {}
+        involved_stats, involved_deltas = {}, {}
         for invstat in mixed_graphs[statid]:
-            involved_stats[invstat] = get_stat_for_graph(dbx, invstat)
+            tmpstat = get_stat_for_graph(dbx, invstat)
+            involved_stats[invstat] = tmpstat
+            print(tmpstat)
+            exit()
+            #involved_stats[invstat] = tmpstat
             
         singlestat = (len(involved_stats.values()) == 1)
             
         if max(list(map(len,involved_stats.values()))) > 1: # involved_stats musi obsahovat aspon 1 radu o >=2 hodnotach
 
             print("[%s/%s]: Creating %s                       \r" % (i, len(mixed_graphs), statid), end = '\r')
-            make_graph( involved_stats, "%s/img/%s.png" % (dirname, statid) )
             
-            # najdi nazev statistiky
-            statname = statnames[statid] if statid in statnames.keys() else statid
-
+            # zakladni a delta graf
+            make_graph( involved_stats, "%s/img/%s.png" % (dirname, statid) )
+            make_graph( involved_deltas, "%s/img/%s.delta.png" % (dirname, statid) )
+            
             # html stranka
+            statname = statnames[statid] if statid in statnames.keys() else statid
             bottom_links = (html.a("%s.csv" % statid, "Zdrojová data ve formátu CSV") + html.br()) if singlestat else ""
             bottom_links += html.a("index.htm", "Všechny statistiky")
             page = func.replace_all(func.readfile('../templates/stat.htm'),
