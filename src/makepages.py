@@ -30,20 +30,25 @@ def message_and_exit(message=""):
     exit()
 
 
+def get_oldest_timeline(rowlist_in):
+    """ Vraci klic te casove rady, ktera ma nejstarsi datum """
+    oldest_date, oldest_id = datetime.datetime.now().date(), None
+    rowlist = rowlist_in
+    for id in rowlist:
+        oldest_in_row = min(list(map(lambda x: x[0], rowlist[id])))
+        if oldest_in_row<oldest_date:
+            oldest_date = oldest_in_row
+            oldest_id = id
+    return oldest_id
+    
+
 def make_graph( rowlist, filename=""):
     """ Vytvori carovy graf. Ulozi jej do souboru,
         neni-li jmeno souboru definovano, zobrazi jej
         rowlist .. list s datovymi radami
     """    
 
-    # HACK: proste hnusne, prepsat pythonic way
-    datarows = {}
-    for rowname in rowlist.keys():
-        X, Y = [], []
-        for row in rowlist[rowname]:
-            X.append('{0:%d.%m.%Y}'.format(row[0]))
-            Y.append(row[1])
-        datarows[rowname] = (X,Y)
+    rowlist_count = len(rowlist)
 
     # create graph
     figure(num=None, figsize=(16, 10), dpi=80, facecolor='w', edgecolor='w')
@@ -51,8 +56,13 @@ def make_graph( rowlist, filename=""):
     ax.xaxis.set_major_locator(plt.MaxNLocator(6))  # pocet ticku na X ose
     
     i = 0
-    for key in datarows.keys():
-        plt.plot(datarows[key][0], datarows[key][1], '%s-' % LINE_COLORS[i], linewidth=4.0, label=key) 
+    while len(rowlist.keys()):
+        X, Y, oldest = [], [], get_oldest_timeline(rowlist)
+        for row in rowlist[oldest]:
+            X.append('{0:%d.%m.%Y}'.format(row[0]))
+            Y.append(row[1])
+        plt.plot(X, Y, '%s-' % LINE_COLORS[i], linewidth=4.0, label=oldest) 
+        rowlist = {i:rowlist[i] for i in rowlist if i!=oldest}
         i += 1
         
     ax.spines['top'].set_visible(False)             # odstran horni a pravy ramecek grafu
@@ -61,7 +71,7 @@ def make_graph( rowlist, filename=""):
     plt.ticklabel_format(style='plain', axis='y')
     plt.tick_params(axis='both', which='major', labelsize=16) # velikost fontu na osach
 
-    if len(rowlist) > 1: 
+    if rowlist_count > 1: 
         ax.legend()
 
     if filename:
