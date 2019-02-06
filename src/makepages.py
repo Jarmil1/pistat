@@ -32,14 +32,17 @@ def message_and_exit(message=""):
 
 def get_oldest_timeline(rowlist_in):
     """ Vraci klic te casove rady, ktera ma nejstarsi datum """
-    oldest_date, oldest_id = datetime.datetime.now().date(), None
+    oldest_date, oldest_id, lastkey = datetime.datetime.now().date(), None, None
     rowlist = rowlist_in
     for id in rowlist:
-        oldest_in_row = min(list(map(lambda x: x[0], rowlist[id])))
-        if oldest_in_row<oldest_date:
-            oldest_date = oldest_in_row
-            oldest_id = id
-    return oldest_id
+        lastkey = id
+        datelist = list(map(lambda x: x[0], rowlist[id]))
+        if datelist:
+            oldest_in_row = min(datelist)
+            if oldest_in_row<oldest_date:
+                oldest_date = oldest_in_row
+                oldest_id = id
+    return oldest_id if oldest_id else lastkey
     
 
 def make_graph( rowlist, filename=""):
@@ -49,9 +52,7 @@ def make_graph( rowlist, filename=""):
     """    
 
     rowlist_count = len(rowlist)
-    
-    print(rowlist)
-    exit()
+    minimal_value = min(list(map(lambda x: x[1], sum(list(rowlist.values()),[]))))
 
     # create graph
     figure(num=None, figsize=(16, 10), dpi=80, facecolor='w', edgecolor='w')
@@ -70,7 +71,8 @@ def make_graph( rowlist, filename=""):
         
     ax.spines['top'].set_visible(False)             # odstran horni a pravy ramecek grafu
     ax.spines['right'].set_visible(False)
-    plt.ylim(bottom=0)                              # osa Y zacina vzdy od nuly
+    if minimal_value > 0:                           # osa Y zacina od nuly u kladnych grafu
+        plt.ylim(bottom=0)                              
     plt.ticklabel_format(style='plain', axis='y')
     plt.tick_params(axis='both', which='major', labelsize=16) # velikost fontu na osach
 
