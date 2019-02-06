@@ -101,11 +101,12 @@ def make_pages(dbx, dirname):
         statnames[lineparts[0]] = "!" + lineparts[0]
     
     # 2) pridej automaticky vytvarene twitter kombinovane grafy
-    # TWEETS a FOLLOWERS
+    # TWEETS, FOLLOWERS a LIKES
     for stat in stats: 
         found = re.search(r'TWITTER_(.+?)_TWEETS', stat)
         if found: 
-            mixed_graphs["TWITTER_%s" % found.group(1)] = [ stat, "TWITTER_%s_FOLLOWERS" % found.group(1) ]
+            mixed_graphs["TWITTER_%s" % found.group(1)] = [ stat, "TWITTER_%s_FOLLOWERS" % found.group(1), 
+                "TWITTER_%s_LIKES" % found.group(1) ]
             statnames["TWITTER_%s" % found.group(1)] = "Twitter %s" % found.group(1) # default name
 
     # 3) pridej vsechny ostatni statistiky, vynechej TWITTERY

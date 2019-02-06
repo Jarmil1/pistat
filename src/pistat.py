@@ -179,7 +179,7 @@ if __name__ == '__main__':
     elif arg('h'):
         message_and_exit()
     elif arg('a'):
-        s = clsMyStat(dbx, '')
+        s = func.clsMyStat(dbx, '')
         lst = s.getAllStats()
         for l in lst:
             print(l)
@@ -189,9 +189,9 @@ if __name__ == '__main__':
         except ValueError:
             message_and_exit("ERROR: expected number on stdio")
         if value:
-            Stat(dbx, arg('s'), value, 0, '')
+            func.Stat(dbx, arg('s'), value, 0, '')
     elif arg('p'):
-        stat = clsMyStat(dbx, arg('p'))
+        stat = func.clsMyStat(dbx, arg('p'))
         stat.printLastValues()
     else:
         main()
