@@ -185,9 +185,12 @@ def make_pages(dbx, dirname):
             statname = statnames[statid] if statid in statnames.keys() else statid
 
             # html stranka
-            page = func.replace_all(func.readfile('../templates/stat.htm' if singlestat else '../templates/stat_nodata.htm' ),
+            bottom_links = (html.a("%s.csv" % statid, "Zdrojová data ve formátu CSV") + html.br()) if singlestat else ""
+            bottom_links += html.a("index.htm", "Všechny statistiky")
+            page = func.replace_all(func.readfile('../templates/stat.htm'),
                 { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % statid,
-                '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
+                '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()),
+                        '%bottomlinks%': bottom_links } )
             func.writefile(page, "%s/%s.htm" % (dirname, statid))    
 
             # vytvor CSV soubor se zdrojovymi daty

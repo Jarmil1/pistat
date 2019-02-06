@@ -27,3 +27,7 @@ def p(content):
     
 def a(url, text):
     return "<a href=\"%s\">%s</a>" % (url, text)
+
+
+def br():
+    return "<br>\n" 
