@@ -1,12 +1,10 @@
 # Popisy statistik. Jsou od identifikatoru oddeleny tabulatorem
-# Pokud popis zacina !, jde o dulezitou statistiku, bude v indexu
-# vypsana prednostne a dostane kafe
 
-BALANCE_FIO_TOTAL	!Celkový zůstatek na FIO účtech
-PAYROLL_COUNT	!Počet placených zaměstanců (payrols)
-PI_MEMBERS_TOTAL	!Počet členů
+BALANCE_FIO_TOTAL	Celkový zůstatek na FIO účtech
+PAYROLL_COUNT	Počet placených zaměstanců (payrols)
+PI_MEMBERS_TOTAL	Počet členů
 RANDOM	Náhodné testovací hodnoty
 SOMESTAT
-PI_FORUM_POSTS	!Příspěvků na fóru
-PI_FORUM_USERS	!Uživatelů fóra
+PI_FORUM_POSTS	Příspěvků na fóru
+PI_FORUM_USERS	Uživatelů fóra
 

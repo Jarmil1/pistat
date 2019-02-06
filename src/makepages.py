@@ -9,11 +9,13 @@
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
-import func
 import datetime
-import credentials
 import shutil
 import re
+
+import credentials
+import func
+import html
 
 LINE_COLORS = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
 
@@ -33,7 +35,7 @@ def make_graph( rowlist, filename=""):
         neni-li jmeno souboru definovano, zobrazi jej
         rowlist .. list s datovymi radami
     """    
-    
+
     # HACK: proste hnusne, prepsat pythonic way
     datarows = {}
     for rowname in rowlist.keys():
@@ -81,6 +83,12 @@ def get_stat_for_graph(dbx, stat):
 def make_pages(dbx, dirname):
     """ Nageneruj stranky a obrazky do adresare dirname """
 
+    def add_stat_to_group(groups, groupname, statid):
+        try:
+            groups[groupname].append(statid)
+        except KeyError:
+            groups[groupname] = [statid]
+
     func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
     shutil.rmtree(dirname)
     func.makedir(dirname)
@@ -89,7 +97,7 @@ def make_pages(dbx, dirname):
     s = func.clsMyStat(dbx, '')
     stats = s.getAllStats()
     
-    i, index, statnames = 0, ['',''], {}
+    i, statnames, groups = 0, {}, {}
 
     # vytvor ve trech krocich seznam vsech generovanych grafu:
     
@@ -98,16 +106,19 @@ def make_pages(dbx, dirname):
     for line in func.getconfig('../config/graphs'):
         lineparts = list(map(str.strip,line.split(' ')))
         mixed_graphs[lineparts[0]] = lineparts[1:]
-        statnames[lineparts[0]] = "!" + lineparts[0]
+        statnames[lineparts[0]] = lineparts[0]
+        add_stat_to_group( groups, 'Porovnání', lineparts[0])
     
     # 2) pridej automaticky vytvarene twitter kombinovane grafy
     # TWEETS, FOLLOWERS a LIKES
     for stat in stats: 
         found = re.search(r'TWITTER_(.+?)_TWEETS', stat)
         if found: 
-            mixed_graphs["TWITTER_%s" % found.group(1)] = [ stat, "TWITTER_%s_FOLLOWERS" % found.group(1), 
+            statid = "TWITTER_%s" % found.group(1)
+            mixed_graphs[statid] = [ stat, "TWITTER_%s_FOLLOWERS" % found.group(1), 
                 "TWITTER_%s_LIKES" % found.group(1) ]
-            statnames["TWITTER_%s" % found.group(1)] = "Twitter %s" % found.group(1) # default name
+            statnames[statid] = "Twitter %s" % found.group(1) # default name
+            add_stat_to_group( groups, 'Twitteři', statid)
 
     # 3) pridej vsechny ostatni statistiky, vynechej TWITTERY
     # vytvor ponekud nesystemove defaultni nazvy
@@ -117,9 +128,19 @@ def make_pages(dbx, dirname):
             found = re.search(r'BALANCE_(.+)', stat)
             if found: 
                 statnames[stat] = "Zůstatek %s" % found.group(1) 
+                add_stat_to_group( groups, 'Finance', stat)
+                continue
             found = re.search(r'PI_MEMBERS_(.+)', stat)
             if found: 
                 statnames[stat] = "Počet členů %s" % found.group(1) 
+                add_stat_to_group( groups, 'Členové', stat)
+                continue
+            found = re.search(r'YOUTUBE_(.+)', stat)
+            if found: 
+                statnames[stat] = "Youtube %s" % found.group(1) 
+                add_stat_to_group( groups, 'Youtube', stat)
+                continue
+            add_stat_to_group( groups, 'Ostatní', stat)
                 
     # donacti jmena statistik z konfigurace
     for line in func.getconfig('../config/statnames'):
@@ -128,6 +149,20 @@ def make_pages(dbx, dirname):
             statnames[a] = b
         except ValueError:
             pass
+
+    # titulni stranka & assets
+    mybody = ""
+    for groupname in groups:
+        paragraph = ''
+        for statid in groups[groupname]:
+            statname = statnames[statid] if statid in statnames.keys() else statid
+            paragraph += html.a("%s.htm" % statid, statname) + '\n'
+        mybody += html.h2(groupname) + html.p(paragraph)
+        
+    page = func.replace_all(func.readfile('../templates/index.htm'), { '%body%': mybody } )
+    func.writefile(page, "%s/index.htm" % dirname)    
+    shutil.copytree('../templates/assets', "%s/assets" % dirname)
+
             
     # Vytvor vsechny kombinovane grafy, vynech statistiky s nejvyse jednou hodnotou
     for statid in mixed_graphs: 
@@ -146,32 +181,19 @@ def make_pages(dbx, dirname):
             print("[%s/%s]: Creating %s                       \r" % (i, len(mixed_graphs), statid), end = '\r')
             make_graph( involved_stats, "%s/img/%s.png" % (dirname, statid) )
             
-            # najdi nazev statistiky, dulezitost...
+            # najdi nazev statistiky
             statname = statnames[statid] if statid in statnames.keys() else statid
-            if statname.startswith('!'):
-                important = True
-                statname = statname[1:]
-            else:
-                important = False
 
             # html stranka
             page = func.replace_all(func.readfile('../templates/stat.htm' if singlestat else '../templates/stat_nodata.htm' ),
                 { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % statid,
                 '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
             func.writefile(page, "%s/%s.htm" % (dirname, statid))    
-            
-            index[0 if important else 1] += "<a href='%s.htm'>%s</a>, \n" % (statid, statname)
 
             # vytvor CSV soubor se zdrojovymi daty
             if singlestat:
                 csv_rows = [ "%s;%s;%s;" % (statid, "{:%d.%m.%Y}".format(x[0]), x[1]) for x in list(involved_stats.values())[0] ]
                 func.writefile("stat_id;date;value;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, statid))    
-
-
-    page = func.replace_all(func.readfile('../templates/index.htm'), { '%important%': index[0], '%body%': index[1] } )
-    func.writefile(page, "%s/index.htm" % dirname)    
-
-    shutil.copytree('../templates/assets', "%s/assets" % dirname)
 
 
 def dummy_backup_db(dbx, dirname):
