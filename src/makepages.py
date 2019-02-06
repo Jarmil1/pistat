@@ -174,7 +174,8 @@ def make_pages(dbx, dirname):
             paragraph += html.a("%s.delta.htm" % statid, statname) + '\n'
         mybody += html.h2(groupname) + html.p(paragraph)
         
-    page = func.replace_all(func.readfile('../templates/index.htm'), { '%body%': mybody } )
+    page = func.replace_all(func.readfile('../templates/index.htm'), 
+        { '%body%': mybody, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
     func.writefile(page, "%s/index.htm" % dirname)    
     shutil.copytree('../templates/assets', "%s/assets" % dirname)
 
