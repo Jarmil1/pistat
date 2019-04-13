@@ -169,7 +169,7 @@ def make_pages(dbx, dirname):
     # titulni stranka & assets
     mybody = ""
     for groupname in groups:
-        paragraph = ''
+        paragraph = []
         for statid in groups[groupname]:
             if statid in statnames_index.keys():
                 statname = statnames_index[statid] 
@@ -177,8 +177,9 @@ def make_pages(dbx, dirname):
                 statname = statnames[statid] 
             else:
                 statname = statid
-            paragraph += html.a("%s.delta.htm" % statid, statname) + '\n'
-        mybody += html.h2(groupname) + html.p(paragraph)
+            paragraph.append(html.a("%s.delta.htm" % statid, statname))
+        paragraph.sort()
+        mybody += html.h2(groupname) + html.p(",\n".join(paragraph))
         
     page = func.replace_all(func.readfile('../templates/index.htm'), 
         { '%body%': mybody, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
