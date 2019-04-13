@@ -196,7 +196,7 @@ def make_pages(dbx, dirname):
                 deltastat.append([entry[0], 0 if lastvalue is None else entry[1] - lastvalue])
                 lastvalue = entry[1]
             involved_deltas[invstat] = deltastat
-            
+        
         singlestat = (len(involved_stats.values()) == 1)
             
         if max(list(map(len,involved_stats.values()))) > 1: # involved_stats musi obsahovat aspon 1 radu o >=2 hodnotach
@@ -226,6 +226,8 @@ def make_pages(dbx, dirname):
             if singlestat:
                 csv_rows = [ "%s;%s;%s;" % (statid, "{:%d.%m.%Y}".format(x[0]), x[1]) for x in list(involved_stats.values())[0] ]
                 func.writefile("stat_id;date;value;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, statid))    
+
+
 
 
 def dummy_backup_db(dbx, dirname):
