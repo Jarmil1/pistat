@@ -112,7 +112,7 @@ def make_pages(dbx, dirname):
     s = func.clsMyStat(dbx, '')
     stats = s.getAllStats()
     
-    i, statnames, groups = 0, {}, {}
+    i, statnames, statnames_index, groups = 0, {}, {}, {}
 
     # vytvor ve trech krocich seznam vsech generovanych grafu:
     
@@ -132,7 +132,8 @@ def make_pages(dbx, dirname):
             statid = "TWITTER_%s" % found.group(1)
             mixed_graphs[statid] = [ stat, "TWITTER_%s_FOLLOWERS" % found.group(1), 
                 "TWITTER_%s_LIKES" % found.group(1) ]
-            statnames[statid] = "Twitter %s" % found.group(1) # default name
+            statnames[statid] = "Twitter %s" % found.group(1)   # default jmeno
+            statnames_index[statid] = "%s" % found.group(1)     # default jmeno na titulni stranku
             add_stat_to_group( groups, 'Twitteři', statid)
 
     # 3) pridej vsechny ostatni statistiky, vynechej TWITTERY
@@ -170,7 +171,12 @@ def make_pages(dbx, dirname):
     for groupname in groups:
         paragraph = ''
         for statid in groups[groupname]:
-            statname = statnames[statid] if statid in statnames.keys() else statid
+            if statid in statnames_index.keys():
+                statname = statnames_index[statid] 
+            elif statid in statnames.keys():
+                statname = statnames[statid] 
+            else:
+                statname = statid
             paragraph += html.a("%s.delta.htm" % statid, statname) + '\n'
         mybody += html.h2(groupname) + html.p(paragraph)
         
