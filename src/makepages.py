@@ -103,6 +103,14 @@ def make_pages(dbx, dirname):
             groups[groupname].append(statid)
         except KeyError:
             groups[groupname] = [statid]
+            
+    def stat_min_date(stat):
+        ''' vrat nejmensi datum v datove rade statistiky stat = [ (datum, hodnota), (datum, hodnota) ...] '''
+        return min(list(map(lambda x: x[0],stat))) if stat else None
+
+    def stat_max_date(stat):
+        ''' obdobne vrat nejvetsi datum '''
+        return max(list(map(lambda x: x[0],stat))) if stat else None
 
     func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
     shutil.rmtree(dirname)
@@ -216,25 +224,27 @@ def make_pages(dbx, dirname):
             
             # html stranka
             statname = statnames[statid] if statid in statnames.keys() else statid
+            min_date = min(list(map(stat_min_date, filter(lambda x: x, involved_stats.values()))))   # rozsah dat
+            max_date = max(list(map(stat_max_date, filter(lambda x: x, involved_stats.values()))))
             bottom_links = (html.a("%s.csv" % statid, "Zdrojová data ve formátu CSV") + html.br()) if singlestat else ""
             bottom_links += html.a("index.htm", "Všechny statistiky")
             page = func.replace_all(func.readfile('../templates/stat.htm'),
                 { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % statid,
                   '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()),
-                  '%bottomlinks%': bottom_links, '%stat_type%': "Absolutní hodnoty" } )
+                  '%bottomlinks%': bottom_links, '%stat_type%': "Absolutní hodnoty",
+                  '%daterange%': '%s - %s' % (min_date, max_date) } )
             func.writefile(page, "%s/%s.htm" % (dirname, statid))    
             page = func.replace_all(func.readfile('../templates/stat.htm'),
                 { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.delta.png" % statid,
-                '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()),
-                  '%bottomlinks%': bottom_links, '%stat_type%': "Denní přírůstky (delta)" } )
+                  '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()),
+                  '%bottomlinks%': bottom_links, '%stat_type%': "Denní přírůstky (delta)",
+                  '%daterange%': '%s - %s' % (min_date, max_date) } )
             func.writefile(page, "%s/%s.delta.htm" % (dirname, statid))    
 
             # vytvor CSV soubor se zdrojovymi daty
             if singlestat:
                 csv_rows = [ "%s;%s;%s;" % (statid, "{:%d.%m.%Y}".format(x[0]), x[1]) for x in list(involved_stats.values())[0] ]
                 func.writefile("stat_id;date;value;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, statid))    
-
-
 
 
 def dummy_backup_db(dbx, dirname):
