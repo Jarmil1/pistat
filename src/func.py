@@ -196,12 +196,19 @@ def atom_entries(url):
     return entries
 
     
+def filter_config(rawinput):
+    ''' Vrat list radku z listu rwainput, bez komentaru a prazdnych radku, 
+        bez duplicit, radky orezane o whitespaces, v nahodnem poradi
+    '''    
+    x = list(set(filter(
+        lambda x: (not x.strip().startswith('#')) and (x.strip()), rawinput)))
+    return list(map(str.strip, x))
+    
+    
 def getconfig(filename):
     ''' Vrat list radku v konfiguracnim souboru filename, bez komentaru
         a prazdnych radku, bez duplicit, radky orezane o whitespaces, 
         v nahodnem poradi
     '''    
-    x = list(set(filter(
-        lambda x: (not x.strip().startswith('#')) and (x.strip()), 
-        readfile(filename).split('\n'))))
-    return list(map(str.strip, x))
+    return filter_config(readfile(filename).split('\n'))
+    

@@ -153,22 +153,25 @@ def main():
         value = int(re.sub(r'\xa0','',m[0])) if m else 0
         func.Stat(dbx, id + '_VIEWS', value, 0, id + '_VIEWS')
 
-    # pocty followeru a tweetu ve vybranych twitter kanalech
-    twitter_accounts = func.getconfig('../config/twitters')[:200]
+    # pocty followeru a tweetu ve vybranych twitter kanalech, konfiguraci nacti z druheho gitu
+    twitter_accounts = func.filter_config(func.getLines('https://raw.githubusercontent.com/Jarmil1/pistat-conf/master/twitters'))[:200]
     for id in twitter_accounts:
         content = func.getUrlContent("https://twitter.com/%s" % id)
-        m = re.findall(r'data-count=([0-9]*)', content)
-        if m:
-            func.Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
-            func.Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, id + " Tweets")         # hack dtto    
-            if len(m)>3:
-                func.Stat(dbx, "TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, id + " Likes")          # hack dtto    
-            else: 
-                print(id, "skipped, no likes found")
-
-    
+        if content:
+            m = re.findall(r'data-count=([0-9]*)', content)
+            if m:
+                func.Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
+                func.Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, id + " Tweets")         # hack dtto    
+                if len(m)>3:
+                    func.Stat(dbx, "TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, id + " Likes")          # hack dtto    
+                else: 
+                    print(id, "skipped: no likes found")
+        else:
+            print(id, "skipped: this account does not exist?")
+        
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
+    # print(func.filter_config(func.getLines('https://raw.githubusercontent.com/Jarmil1/pistat-conf/master/twitters'))[:200])
     pass
 
 if __name__ == '__main__': 
