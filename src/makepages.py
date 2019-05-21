@@ -5,6 +5,7 @@
         -h      help: vypise tuto napovedu
         -oName  jmeno vystupniho adresare, napr -o../output
         -bName  provede dummy zalohu DB do adresare Name
+        -sName  pouze statistiku Name
 """
 
 import matplotlib.pyplot as plt
@@ -20,7 +21,7 @@ import html
 LINE_COLORS = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
 
 def arg(argumentName):
-    return func.getArg(argumentName,"ho:b:")
+    return func.getArg(argumentName,"ho:b:s:")
     
     
 def message_and_exit(message=""):    
@@ -197,6 +198,9 @@ def make_pages(dbx, dirname):
     # Vytvor vsechny kombinovane grafy, vynech statistiky s nejvyse jednou hodnotou
     for statid in mixed_graphs: 
 
+        if arg('s') and statid!=arg('s'):
+            continue
+            
         i += 1
 
         # graf
