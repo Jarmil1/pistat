@@ -45,6 +45,41 @@ def get_oldest_timeline(rowlist_in):
                 oldest_id = id
     return oldest_id if oldest_id else lastkey
     
+    
+class Stat():
+    """ Pro slozitejsi manipulace se statistikou """
+
+    def __init__(self, name, values):
+        self.name = name
+        self.values = list(values)
+        
+    def oldest(self):
+        """ vrat nejstarsi datum souboru dat nebo None, je-li soubor prazdny"""
+        return min(map(lambda x: x[0], self.values)) if self.values else None
+
+    def newest(self):
+        """ vrat nejnovejsi datum souboru dat nebo None, je-li soubor prazdny """
+        return max(map(lambda x: x[0], self.values)) if self.values else None
+        
+    def fill_range(self, min, max, value=None):
+        """ dopln do souboru dat chybejici hodnoty z rozsahu min-max, vcetne.
+            vysledek setrid podle data
+        """
+
+        just_dates = list(map(lambda x: x[0], self.values))
+
+        startdate = min
+        while startdate <= max:
+            startdate += datetime.timedelta(days=1)
+            if not startdate in just_dates:
+                self.values.append( [startdate, value] )
+        
+        newvalues = [ list(x) for x in self.values ]
+        
+        newvalues.sort()
+        self.values = newvalues
+            
+        
 
 def make_graph( rowlist, filename=""):
     """ Vytvori carovy graf. Ulozi jej do souboru,
@@ -54,6 +89,23 @@ def make_graph( rowlist, filename=""):
 
     rowlist_count = len(rowlist)
     minimal_value = min(list(map(lambda x: x[1], sum(list(rowlist.values()),[]))))
+
+    # datove rady mohou obsahovat chubejici hodnoty, diky nimz 
+    # graf vypada zmatene. Je treba data normalizovat:
+    # preved data na objekty Stat, zjisti rozsah dat, normalizuj 
+    # zabudovanou funkci a preved zpet na rowlist 
+    stats = []
+    for row in rowlist:
+        stats.append(Stat(row, rowlist[row]))
+    
+    oldest_date = min(filter(lambda x: x, map(lambda x: x.oldest(), stats)))
+    newest_date = max(filter(lambda x: x, map(lambda x: x.newest(), stats)))
+
+    rowlist = {}
+    for s in stats:
+        s.fill_range(oldest_date, newest_date)
+        rowlist[s.name] = s.values
+        
 
     # create graph
     figure(num=None, figsize=(16, 10), dpi=80, facecolor='w', edgecolor='w')
