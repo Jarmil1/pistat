@@ -13,6 +13,7 @@ from matplotlib.pyplot import figure
 import datetime
 import shutil
 import re
+import operator
 
 import credentials
 import func
@@ -53,6 +54,10 @@ class Stat():
         self.name = name
         self.values = list(values)
         
+    def max(self):
+        """ vrat nejvyssi hodnotu statistiky nebo None, je-li soubor prazdny """
+        return max(map(lambda x: x[1], self.values)) if self.values else None
+
     def oldest(self):
         """ vrat nejstarsi datum souboru dat nebo None, je-li soubor prazdny"""
         return min(map(lambda x: x[0], self.values)) if self.values else None
@@ -175,10 +180,23 @@ def make_pages(dbx, dirname):
     
     i, statnames, statnames_index, groups = 0, {}, {}, {}
 
-    # vytvor ve trech krocich seznam vsech generovanych grafu:
-    
-    # 1) nacti ty z konfigurace, preved na hashtabulku
+    # vytvor seznam vsech generovanych grafu:
     mixed_graphs = {}
+    
+    # pridej automaticky vytvareny seznam nejvice tweetujicich uzivatelu
+    best_twitters = {}
+    for stat in stats: 
+        if re.search(r'TWITTER_(.+?)_TWEETS', stat):
+            mystat = Stat(stat, get_stat_for_graph(dbx, stat))
+            best_twitters[stat] = mystat.max()
+    sorted_twitters = sorted(best_twitters.items(), key=operator.itemgetter(1))[-7:]
+    stat_id = 'BEST_TWITTERS'
+    mixed_graphs[stat_id] = [ x[0] for x in sorted_twitters]
+    add_stat_to_group( groups, 'Porovnání', stat_id)
+    #print(mixed_graphs[stat_id])
+    #exit()
+            
+    # 1) nacti ty z konfigurace, preved na hashtabulku
     for line in func.getconfig('../config/graphs'):
         lineparts = list(map(str.strip,line.split(' ')))
         mixed_graphs[lineparts[0]] = lineparts[1:]
