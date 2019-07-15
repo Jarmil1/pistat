@@ -7,4 +7,5 @@ RANDOM	Náhodné testovací hodnoty
 SOMESTAT
 PI_FORUM_POSTS	Příspěvků na fóru
 PI_FORUM_USERS	Uživatelů fóra
-
+PP_APPROVED_AGE	Průměrné stáří žádostí ve stavu Schváleno hospodářem
+PP_APPROVED_COUNT	Počet žádostí ve stavu Schváleno hospodářem

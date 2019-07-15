@@ -25,6 +25,13 @@ def arg(argumentName):
     return func.getArg(argumentName,"ho:b:s:")
     
     
+def merge_dicts(x, y):
+    """ Slouci dva slovniky do jednoho a vrati vysledek. """
+    z = x.copy()   
+    z.update(y)    
+    return z
+
+    
 def message_and_exit(message=""):    
     if message:
         print(message)
@@ -57,6 +64,10 @@ class Stat():
     def max(self):
         """ vrat nejvyssi hodnotu statistiky nebo None, je-li soubor prazdny """
         return max(map(lambda x: x[1], self.values)) if self.values else None
+
+    def min(self):
+        """ vrat nejnizzsi hodnotu statistiky nebo None, je-li soubor prazdny """
+        return min(map(lambda x: x[1], self.values)) if self.values else None
 
     def oldest(self):
         """ vrat nejstarsi datum souboru dat nebo None, je-li soubor prazdny"""
@@ -193,8 +204,6 @@ def make_pages(dbx, dirname):
     stat_id = 'BEST_TWITTERS'
     mixed_graphs[stat_id] = [ x[0] for x in sorted_twitters]
     add_stat_to_group( groups, 'Porovnání', stat_id)
-    #print(mixed_graphs[stat_id])
-    #exit()
             
     # 1) nacti ty z konfigurace, preved na hashtabulku
     for line in func.getconfig('../config/graphs'):
@@ -234,6 +243,10 @@ def make_pages(dbx, dirname):
             if found: 
                 statnames[stat] = "Youtube %s" % found.group(1) 
                 add_stat_to_group( groups, 'Youtube', stat)
+                continue
+            found = re.search(r'PP_(.+)', stat)
+            if found: 
+                add_stat_to_group( groups, 'Kancelář', stat)
                 continue
             add_stat_to_group( groups, 'Ostatní', stat)
                 
@@ -275,9 +288,11 @@ def make_pages(dbx, dirname):
 
         # graf
         involved_stats, involved_deltas = {}, {}
+        statInstances = []
         for invstat in mixed_graphs[statid]:
             tmpstat = get_stat_for_graph(dbx, invstat)
             involved_stats[invstat] = tmpstat
+            statInstances.append(Stat(invstat, involved_stats[invstat]))
             
             # spocitej delta statistiku 
             deltastat, lastvalue = [], None
@@ -302,17 +317,24 @@ def make_pages(dbx, dirname):
             max_date = max(list(map(stat_max_date, filter(lambda x: x, involved_stats.values()))))
             bottom_links = (html.a("%s.csv" % statid, "Zdrojová data ve formátu CSV") + html.br()) if singlestat else ""
             bottom_links += html.a("index.htm", "Všechny statistiky")
-            page = func.replace_all(func.readfile('../templates/stat.htm'),
-                { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.png" % statid,
-                  '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()),
-                  '%bottomlinks%': bottom_links, '%stat_type%': "Absolutní hodnoty",
-                  '%daterange%': '%s - %s' % (min_date, max_date) } )
+            try:
+                min_value = str(min(map( lambda x: x.min(), statInstances)))
+            except TypeError:
+                min_value = '-'
+            try:
+                max_value = str(max(map( lambda x: x.max(), statInstances)))
+            except TypeError:
+                max_value = '-'
+
+            common_replaces = { '%stat_name%': statname, '%stat_desc%': '', '%stat_id%': statid, 
+                  '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()),
+                  '%bottomlinks%': bottom_links, '%daterange%': '%s - %s' % (min_date, max_date),
+                  '%max%': max_value, '%min%': min_value
+            }
+            
+            page = func.replace_all(func.readfile('../templates/stat.htm'), merge_dicts(common_replaces, { '%stat_image%': "img/%s.png" % statid, '%stat_type%': "Absolutní hodnoty" } ) )
             func.writefile(page, "%s/%s.htm" % (dirname, statid))    
-            page = func.replace_all(func.readfile('../templates/stat.htm'),
-                { '%stat_name%': statname, '%stat_desc%': '', '%stat_image%': "img/%s.delta.png" % statid,
-                  '%stat_id%': statid, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()),
-                  '%bottomlinks%': bottom_links, '%stat_type%': "Denní přírůstky (delta)",
-                  '%daterange%': '%s - %s' % (min_date, max_date) } )
+            page = func.replace_all(func.readfile('../templates/stat.htm'), merge_dicts( common_replaces, { '%stat_image%': "img/%s.delta.png" % statid, '%stat_type%': "Denní přírůstky (delta)" } ) )
             func.writefile(page, "%s/%s.delta.htm" % (dirname, statid))    
 
             # vytvor CSV soubor se zdrojovymi daty
