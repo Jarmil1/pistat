@@ -4,6 +4,7 @@
 
 import random, re, getopt, sys
 import urllib.request
+import json
 import mysql.connector
 import os
 from xml.etree import ElementTree as ET
@@ -137,6 +138,16 @@ def getLines(url,verbose=False):
     ''' Vrat obsah url jako seznam radku, nebo None pri neuspechu '''	
     cont = getUrlContent(url, verbose)
     return cont.split("\n") if cont else None
+
+
+def get_json(url):
+    """ Vrat JSON odpoved z adresy URL nebo none v pripade chyby """
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla'})
+    try:
+        r = urllib.request.urlopen(req).read()
+        return json.loads(r.decode('utf-8'))    
+    except Exception as e:
+        return None
 
     
 def grep(regexp,list_of_strings):

@@ -21,6 +21,8 @@ import func
 import credentials
 import re
 import random
+import datetime
+
 
 # Pro zjistovani poctu clenu: id statistiky a URL na forum prislusne skupiny KS
 PIRATI_KS = { 
@@ -120,21 +122,29 @@ def main():
     if lines:
         func.Stat(dbx, "PAYROLL_COUNT", len(func.grep(r'[0-9]+,[0-9]+',lines)), 0, 'Pocet lidi placenych piraty')	
 
+    # piroplaceni: pocet a prumerne stari (od data posledni upravy) zadosti ve stavu "Schvalena hospodarem" (state=3)
+    resp = func.get_json('https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=3')
+    if resp:
+        func.Stat(dbx, "PP_APPROVED_COUNT", len(resp), 0, 'Pocet zadosti v piroplaceni ve stavu Schvalena hospodarem')
+        if len(resp):
+            resp = list(map( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp))
+            func.Stat(dbx, "PP_APPROVED_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti v piroplaceni ve stavu Schvalena hospodarem')
+
     # Zustatky na vsech transparentnich FIO uctech uvedenych na wiki FO
     content = func.getUrlContent("https://wiki.pirati.cz/fo/seznam_uctu")
     if content:
         fioAccounts = list(set(re.findall(r'[0-9]{6,15}[ \t]*/[ \t]*2010', content)))
-        sum = 0
+        total = 0
         for account in fioAccounts:
             account = account.split("/")[0].strip()
-            sum += statFioBalance(account)
-        func.Stat(dbx, "BALANCE_FIO_TOTAL", sum, 0, 'Celkovy stav vsech FIO transparentnich uctu')
+            total += statFioBalance(account)
+        func.Stat(dbx, "BALANCE_FIO_TOTAL", total, 0, 'Celkovy stav vsech FIO transparentnich uctu')
 
     # Pocty clenu v jednotlivych KS a celkem ve strane (prosty soucet dilcich)		
-    sum = 0
+    total = 0
     for id in PIRATI_KS:
-        sum += statNrOfMembers(id, PIRATI_KS[id])
-    func.Stat(dbx, "PI_MEMBERS_TOTAL", sum, 0, 'Pocet clenu CPS celkem')			
+        total += statNrOfMembers(id, PIRATI_KS[id])
+    func.Stat(dbx, "PI_MEMBERS_TOTAL", total, 0, 'Pocet clenu CPS celkem')			
 
     # piratske forum
     stat_forum()
@@ -169,10 +179,11 @@ def main():
         else:
             print(id, "skipped: this account does not exist?")
         
+        
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
-    # print(func.filter_config(func.getLines('https://raw.githubusercontent.com/Jarmil1/pistat-conf/master/twitters'))[:200])
     pass
+
 
 if __name__ == '__main__': 
     dbx = func.clsMySql(credentials.FREEDB, verbose=arg('v'))
