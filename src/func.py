@@ -187,13 +187,6 @@ def makedir(dirname):
         os.mkdir(dirname)
 
     
-def replace_all(string, replaces):    
-    """ proved nahrady v retezci string. 'replaces' je hash tabulka """
-    for x in replaces:
-        string = string.replace(x, replaces[x])
-    return string
-    
-    
 def atom_entries(url):
     """ Vrat seznam XML elementu 'entry' z atom feedu s adresou URL """
     try:
