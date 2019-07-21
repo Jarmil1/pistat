@@ -84,12 +84,18 @@ class clsMyStat:
         r = self.database.fetchall("SELECT DISTINCT id FROM %s" % (self.tablename))
         return [ x[0] for x in r ]
 
-    def getLastValues(self,count=0):
-        """ Vrati nejnovejsich count polozek statistiky. Je-li count=0, pak vsechny"""
-        q = "SELECT date_start,value FROM %s WHERE (id='%s') ORDER BY date_start DESC" % (self.tablename,self.stat_id)
+    def getLastValues(self, count=0, with_methods=False):
+        """ Vrati nejnovejsich count polozek statistiky. 
+                count           pocet polozek, je-li=0, pak vsechny
+                with_methods    vrati textovy popis metod ziskani zaznamu z tabulky methods (pomalejsi)
+        """
+        if with_methods:
+            q = "SELECT date_start,value, methods.description FROM methods RIGHT JOIN %s on method=md5 WHERE (id='%s') ORDER BY date_start DESC" % (self.tablename, self.stat_id)
+        else:
+            q = "SELECT date_start,value FROM %s WHERE (id='%s') ORDER BY date_start DESC" % (self.tablename,self.stat_id)
         if count:
             q += " LIMIT 0,%s" % count
-        return self.database.fetchall(q )
+        return self.database.fetchall(q)
 
     def printLastValues(self,count=0):
         """ Vytiskne nejnovejsich count polozek statistiky.
@@ -126,12 +132,6 @@ def Stat(dbx,statname,value,datediff,friendlyName=""):
 		st.addStat(value, datediff, friendlyName)
 	else:
 		print("Skipping stat %s, value is None" % statname)
-
-		
-def PrintLastValues(dbx,statname,count):
-    """ wrapper pro clsMyStat.printLastValues """
-    st = clsMyStat(dbx,statname)
-    st.printLastValues(count)
 
 
 def getUrlContent(url,verbose=False):
