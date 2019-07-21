@@ -303,7 +303,7 @@ def make_pages(dbx, dirname):
         
         singlestat = (len(involved_stats.values()) == 1)
             
-        if max(list(map(len,involved_stats.values()))) > 1: # involved_stats musi obsahovat aspon 1 radu o >=2 hodnotach
+        if max(list(map(len,involved_stats.values()))) > 0: # involved_stats musi obsahovat aspon 1 radu o >=1 hodnotach
 
             print("[%s/%s]: Creating %s                       \r" % (i, len(mixed_graphs), statid), end = '\r')
             
