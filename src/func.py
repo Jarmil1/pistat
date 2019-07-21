@@ -185,6 +185,13 @@ def readfile(filename):
     return ret
     
 
+def replace_all(string, replaces):    
+    """ proved nahrady v retezci string. 'replaces' je hash tabulka """
+    for x in replaces:
+        string = string.replace(x, replaces[x])
+    return string
+    
+
 def writefile(string, filename):
     """ Uloz retezec string do filename. """
     with open(filename, 'w') as f:

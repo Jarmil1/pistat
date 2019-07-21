@@ -339,7 +339,7 @@ def make_pages(dbx, dirname):
 
             # vytvor CSV soubor se zdrojovymi daty
             if singlestat:
-                csv_rows = [ "%s;%s;%s;" % (statid, "{:%d.%m.%Y}".format(x[0]), x[1], x[2]) for x in list(involved_stats.values())[0] ]
+                csv_rows = [ "%s;%s;%s;%s;" % (statid, "{:%d.%m.%Y}".format(x[0]), x[1], x[2]) for x in list(involved_stats.values())[0] ]
                 func.writefile("stat_id;date;value;method;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, statid))    
 
 
