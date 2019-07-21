@@ -112,6 +112,26 @@ def message_and_exit(message=""):
     exit()
 
 
+def stat_from_regex( statid, url, regex, humandesc="" ):
+    """ Prida do dnesni statistiku hodnotu ze stranky url, vyhledanou regularnim vyrazem.
+        Jako hodnota se prida prvni skupina (v zavorkach) daneho vyrazu, napr:
+          r'before (.*?) behind'
+        Pokud se tato hodnota neda interpretovat jako int nebo neni nalezena, bude 
+        zobrazena do stdou chybova hlaska a hodnota se neulozi
+    """        
+    res = re.search(regex, func.getUrlContent(url))
+    if res and len(res.groups()):
+        try:
+            value = int(res.group(1))
+        except ValueError:
+            print("ERROR Statistika %s: Hodnotu \"%s\" vracenou regexem nelze prelozit jako int." % (statid, res.group(1)))
+            return 
+        func.Stat(dbx, statid, value, 0, humandesc)
+            
+    else:
+        print("ERROR Statistika %s: Regex nenalezl zadnou hodnotu" % (statid))
+
+
 def main():
 
     # testovaci nahodna hodnota
@@ -129,6 +149,9 @@ def main():
         if len(resp):
             resp = list(map( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp))
             func.Stat(dbx, "PP_APPROVED_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti v piroplaceni ve stavu Schvalena hospodarem')
+
+    # pocet priznivcu, z fora
+    stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', "Pocet registrovanych priznivcu")
 
     # Zustatky na vsech transparentnich FIO uctech uvedenych na wiki FO
     content = func.getUrlContent("https://wiki.pirati.cz/fo/seznam_uctu")
@@ -182,6 +205,9 @@ def main():
         
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
+
+    stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', "Pocet registrovanych priznivcu")
+
     pass
 
 
