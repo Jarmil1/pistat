@@ -61,13 +61,14 @@ def statFioBalance(account):
         HACK: z HTML vypisu hleda sesty radek se suffixem CZK
         Uklada jen nezaporny zustatek (simple test proti pitomostem)
     """	
-    lines = func.getLines("https://ib.fio.cz/ib/transparent?a=%s&format=csv" % account)
+    url = "https://ib.fio.cz/ib/transparent?a=%s&format=csv" % account
+    lines = func.getLines(url)
     if lines:
         regexp = r'&nbsp;CZK'
         line = func.grep(regexp,lines)[5:6][0].strip()
         balance = float(re.sub(regexp,"",line).replace(",",".").replace(chr(160),"") )
         if balance>=0:
-            func.Stat(dbx, "BALANCE_%s" % account, balance, 0, "Stav uctu %s" % account)		
+            func.Stat(dbx, "BALANCE_%s" % account, balance, 0, "Stav uctu %s, scrappingem z %s" % (account, url))
             return balance
     return 0       
             
@@ -117,9 +118,11 @@ def stat_from_regex( statid, url, regex, humandesc="" ):
         Jako hodnota se prida prvni skupina (v zavorkach) daneho vyrazu, napr:
           r'before (.*?) behind'
         Pokud se tato hodnota neda interpretovat jako int nebo neni nalezena, bude 
-        zobrazena do stdou chybova hlaska a hodnota se neulozi
+        zobrazena do stdout chybova hlaska a hodnota se neulozi.
+        Jako popis ziskani se ulozi humandesc, doplnena o URL, z nejz je scrappovano
     """        
     res = re.search(regex, func.getUrlContent(url))
+    humandesc = "%s (scrappingem z %s)" % (humandesc, url)
     if res and len(res.groups()):
         try:
             value = int(res.group(1))
@@ -145,10 +148,10 @@ def main():
     # piroplaceni: pocet a prumerne stari (od data posledni upravy) zadosti ve stavu "Schvalena hospodarem" (state=3)
     resp = func.get_json('https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=3')
     if resp:
-        func.Stat(dbx, "PP_APPROVED_COUNT", len(resp), 0, 'Pocet zadosti v piroplaceni ve stavu Schvalena hospodarem')
+        func.Stat(dbx, "PP_APPROVED_COUNT", len(resp), 0, 'Pocet zadosti o proplaceni ve stavu Schvalena hospodarem, REST dotazem do piroplaceni')
         if len(resp):
             resp = list(map( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp))
-            func.Stat(dbx, "PP_APPROVED_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti v piroplaceni ve stavu Schvalena hospodarem')
+            func.Stat(dbx, "PP_APPROVED_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Schvalena hospodarem, REST dotazem do piroplaceni')
 
     # pocet priznivcu, z fora
     stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', "Pocet registrovanych priznivcu")
@@ -167,7 +170,7 @@ def main():
     total = 0
     for id in PIRATI_KS:
         total += statNrOfMembers(id, PIRATI_KS[id])
-    func.Stat(dbx, "PI_MEMBERS_TOTAL", total, 0, 'Pocet clenu CPS celkem')			
+    func.Stat(dbx, "PI_MEMBERS_TOTAL", total, 0, 'Pocet clenu CPS celkem, jako soucet poctu clenu v KS')			
 
     # piratske forum
     stat_forum()
@@ -206,7 +209,8 @@ def main():
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
 
-    stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', "Pocet registrovanych priznivcu")
+    stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', 
+        "Pocet registrovanych priznivcu")
 
     pass
 

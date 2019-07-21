@@ -7,6 +7,7 @@ import urllib.request
 import json
 import mysql.connector
 import os
+import hashlib
 from xml.etree import ElementTree as ET
 
 statList = []   # zde ukladej seznam vsech vygenerovanych statistik
@@ -99,21 +100,30 @@ class clsMyStat:
         for row in r:
             print("%s\t%s" % (row[0],row[1]))
         
-    def addStat(self,value,datediff):
+    def addStat(self, value, datediff, method=''):
         """Prida jednu polozku statistiky pod udane datum. Pokud uz existuje, prepise ji
-            datediff    .. vzdalenost data od dnesniho, napr. 1=vcera, 2=predevcirem atd
-            """
-        self.database.execute("INSERT IGNORE INTO %s (id,date_start,value) VALUES('%s',DATE_SUB(DATE(NOW()),INTERVAL %s DAY),%s);" % (self.tablename,self.stat_id,datediff,value))
-        self.database.execute("UPDATE %s SET value=%d WHERE (id='%s') AND (date_start=DATE_SUB(DATE(NOW()),INTERVAL %s DAY));" % (self.tablename,float(value), self.stat_id,datediff))
+            datediff    vzdalenost data od dnesniho, napr. 1=vcera, 2=predevcirem atd
+            method      textovy popis, jak byla statistika ziskana
+        """
+        # princip ukladani metody: z popisu (parametr method) vytvor md5 hash a uloz ji k zaznamu v tabluce statistiky
+        # samotny popis uloz do tabulky methods, s md5 jako klicem
+        method = method.replace("'",'*')    # HACK: hnus kvuli SQL dotazu, udelat slusne
+        md5 = hashlib.md5(method.encode('utf-8')).hexdigest()
+        self.database.execute("INSERT IGNORE INTO methods (md5, description) VALUES('%s', '%s');" % (md5,method))
+        
+        self.database.execute("INSERT IGNORE INTO %s (id,date_start,value, method) VALUES('%s',DATE_SUB(DATE(NOW()),INTERVAL %s DAY),%s,'%s');" % (self.tablename,self.stat_id,datediff,value,md5))
+        self.database.execute("UPDATE %s SET value=%d, method='%s' WHERE (id='%s') AND (date_start=DATE_SUB(DATE(NOW()),INTERVAL %s DAY));" % (self.tablename, float(value), md5, self.stat_id,datediff))
+
+
 
 
 def Stat(dbx,statname,value,datediff,friendlyName=""):
 	"""Wrapper pro onelinery: Prida do statistiky jmenem statname hodnotu value pro datum datediff."""        
 	if value:
 		if friendlyName: 
-			print("%s,%s: %s" % (statname,friendlyName,repr(value)))
+			print("%s=%s\t%s" % (statname, repr(value), friendlyName[:30]))
 		st = clsMyStat(dbx,statname)
-		st.addStat(value,datediff)
+		st.addStat(value, datediff, friendlyName)
 	else:
 		print("Skipping stat %s, value is None" % statname)
 
