@@ -269,6 +269,10 @@ def make_pages(dbx, dirname):
             if found: 
                 add_stat_to_group( groups, 'Kancelář', stat)
                 continue
+            found = re.search(r'REDMINE_(.+)', stat)
+            if found: 
+                add_stat_to_group( groups, 'Odbory a složky strany na Redmine', stat)
+                continue
             add_stat_to_group( groups, 'Ostatní', stat)
                 
     # donacti jmena statistik z konfigurace
