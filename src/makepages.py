@@ -97,16 +97,17 @@ class Stat():
             
         
 
-def make_graph( rowlist, filename=""):
+def make_graph(rowlist, filename, delta):
     """ Vytvori carovy graf. Ulozi jej do souboru,
         neni-li jmeno souboru definovano, zobrazi jej
-        rowlist .. list s datovymi radami
+        rowlist     list s datovymi radami
+        delta       zda je vytvaren graf typu delta hodnoty
     """    
 
     rowlist_count = len(rowlist)
     minimal_value = min(list(map(lambda x: x[1], sum(list(rowlist.values()),[]))))
 
-    # datove rady mohou obsahovat chubejici hodnoty, diky nimz 
+    # datove rady mohou obsahovat chybejici hodnoty, diky nimz 
     # graf vypada zmatene. Je treba data normalizovat:
     # preved data na objekty Stat, zjisti rozsah dat, normalizuj 
     # zabudovanou funkci a preved zpet na rowlist 
@@ -130,11 +131,27 @@ def make_graph( rowlist, filename=""):
     
     i = 0
     while len(rowlist.keys()):
+        
+        # zakladni rada
         X, Y, oldest = [], [], get_oldest_timeline(rowlist)
-        for row in rowlist[oldest]:
+        actual_line = rowlist[oldest]
+        for row in actual_line:
             X.append('{0:%d.%m.%Y}'.format(row[0]))
             Y.append(row[1])
         plt.plot(X, Y, '%s-' % LINE_COLORS[i], linewidth=4.0, label=oldest) 
+        
+        # moving average jen pro trendy (u delty nema moc vyznam)
+        avg_length = 9 # delka klouzaveho prumeru, tedy kolik dni zpet se vytvari
+        if not delta:
+            X, Y = [], []
+            for j in range(avg_length, len(actual_line)):
+                row = actual_line[j]
+                rows_for_avg = list(map(lambda x: x[1], actual_line[j-avg_length:j]))
+                moving_avg = None if None in rows_for_avg else sum(rows_for_avg) / float(len(rows_for_avg))
+                X.append('{0:%d.%m.%Y}'.format(row[0]))
+                Y.append(moving_avg)
+            plt.plot(X, Y, '%s:' % LINE_COLORS[i], linewidth=2.0, label=oldest) 
+        
         rowlist = {i:rowlist[i] for i in rowlist if i!=oldest}
         i += 1
         
@@ -308,8 +325,8 @@ def make_pages(dbx, dirname):
             print("[%s/%s]: Creating %s                       \r" % (i, len(mixed_graphs), statid), end = '\r')
             
             # zakladni a delta graf
-            make_graph( involved_stats, "%s/img/%s.png" % (dirname, statid) )
-            make_graph( involved_deltas, "%s/img/%s.delta.png" % (dirname, statid) )
+            make_graph( involved_stats, "%s/img/%s.png" % (dirname, statid), delta=False )
+            make_graph( involved_deltas, "%s/img/%s.delta.png" % (dirname, statid), delta=True )
             
             # html stranka
             statname = statnames[statid] if statid in statnames.keys() else statid
