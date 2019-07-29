@@ -24,6 +24,10 @@ LINE_COLORS = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
 def arg(argumentName):
     return func.getArg(argumentName,"ho:b:s:")
     
+
+def lmap(function, argument):
+    return list(map(function, argument))
+    
     
 def merge_dicts(x, y):
     """ Slouci dva slovniky do jednoho a vrati vysledek. """
@@ -45,7 +49,7 @@ def get_oldest_timeline(rowlist_in):
     rowlist = rowlist_in
     for id in rowlist:
         lastkey = id
-        datelist = list(map(lambda x: x[0], rowlist[id]))
+        datelist = lmap(lambda x: x[0], rowlist[id])
         if datelist:
             oldest_in_row = min(datelist)
             if oldest_in_row<oldest_date:
@@ -82,7 +86,7 @@ class Stat():
             vysledek setrid podle data
         """
 
-        just_dates = list(map(lambda x: x[0], self.values))
+        just_dates = lmap(lambda x: x[0], self.values)
 
         startdate = min
         while startdate <= max:
@@ -105,7 +109,7 @@ def make_graph(rowlist, filename, delta):
     """    
 
     rowlist_count = len(rowlist)
-    minimal_value = min(list(map(lambda x: x[1], sum(list(rowlist.values()),[]))))
+    minimal_value = min(lmap(lambda x: x[1], sum(list(rowlist.values()),[])))
 
     # datove rady mohou obsahovat chybejici hodnoty, diky nimz 
     # graf vypada zmatene. Je treba data normalizovat:
@@ -146,7 +150,7 @@ def make_graph(rowlist, filename, delta):
             X, Y = [], []
             for j in range(avg_length, len(actual_line)):
                 row = actual_line[j]
-                rows_for_avg = list(map(lambda x: x[1], actual_line[j-avg_length:j]))
+                rows_for_avg = lmap(lambda x: x[1], actual_line[j-avg_length:j])
                 moving_avg = None if None in rows_for_avg else sum(rows_for_avg) / float(len(rows_for_avg))
                 X.append('{0:%d.%m.%Y}'.format(row[0]))
                 Y.append(moving_avg)
@@ -192,11 +196,11 @@ def make_pages(dbx, dirname):
             
     def stat_min_date(stat):
         ''' vrat nejmensi datum v datove rade statistiky stat = [ (datum, hodnota), (datum, hodnota) ...] '''
-        return min(list(map(lambda x: x[0],stat))) if stat else None
+        return min(lmap(lambda x: x[0],stat)) if stat else None
 
     def stat_max_date(stat):
         ''' obdobne vrat nejvetsi datum '''
-        return max(list(map(lambda x: x[0],stat))) if stat else None
+        return max(lmap(lambda x: x[0],stat)) if stat else None
 
     func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
     shutil.rmtree(dirname)
@@ -224,7 +228,7 @@ def make_pages(dbx, dirname):
             
     # 1) nacti ty z konfigurace, preved na hashtabulku
     for line in func.getconfig('../config/graphs'):
-        lineparts = list(map(str.strip,line.split(' ')))
+        lineparts = lmap(str.strip,line.split(' '))
         mixed_graphs[lineparts[0]] = lineparts[1:]
         statnames[lineparts[0]] = lineparts[0]
         add_stat_to_group( groups, 'Porovnání', lineparts[0])
@@ -320,7 +324,7 @@ def make_pages(dbx, dirname):
         
         singlestat = (len(involved_stats.values()) == 1)
             
-        if max(list(map(len,involved_stats.values()))) > 0: # involved_stats musi obsahovat aspon 1 radu o >=1 hodnotach
+        if max(lmap(len,involved_stats.values())) > 0: # involved_stats musi obsahovat aspon 1 radu o >=1 hodnotach
 
             print("[%s/%s]: Creating %s                       \r" % (i, len(mixed_graphs), statid), end = '\r')
             
@@ -330,8 +334,8 @@ def make_pages(dbx, dirname):
             
             # html stranka
             statname = statnames[statid] if statid in statnames.keys() else statid
-            min_date = min(list(map(stat_min_date, filter(lambda x: x, involved_stats.values()))))   # rozsah dat
-            max_date = max(list(map(stat_max_date, filter(lambda x: x, involved_stats.values()))))
+            min_date = min(lmap(stat_min_date, filter(lambda x: x, involved_stats.values())))   # rozsah dat
+            max_date = max(lmap(stat_max_date, filter(lambda x: x, involved_stats.values())))
             bottom_links = (html.a("%s.csv" % statid, "Zdrojová data ve formátu CSV") + html.br()) if singlestat else ""
             bottom_links += html.a("index.htm", "Všechny statistiky")
             try:

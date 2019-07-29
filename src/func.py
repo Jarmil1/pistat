@@ -233,3 +233,7 @@ def getconfig(filename):
     '''    
     return filter_config(readfile(filename).split('\n'))
     
+
+def lmap(function, argument):
+    ''' pro zprehledneni casto pouzivaneho zapisu '''
+    return list(map(function, argument))

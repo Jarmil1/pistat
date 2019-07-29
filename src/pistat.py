@@ -22,6 +22,7 @@ import credentials
 import re
 import random
 import datetime
+from func import lmap
 
 
 # Pro zjistovani poctu clenu: id statistiky a URL na forum prislusne skupiny KS
@@ -99,11 +100,11 @@ def stat_forum():
     
     res = re.search(r'Celkem p(.*?)<strong>(.*?)</strong> &bull', lines)
     if res and len(res.groups())>1:
-        func.Stat(dbx, "PI_FORUM_POSTS", int(res.group(2)), 0, 'Pocet prispevku na piratskem foru')
+        func.Stat(dbx, "PI_FORUM_POSTS", int(res.group(2)), 0, 'Pocet prispevku na piratskem foru (scrappingem z https://forum.pirati.cz/index.php)')
     
     res = re.search(r'Celkem zaregistrovan(.*?)<strong>(.*?)</strong> &bull', lines)
     if res and len(res.groups())>1:
-        func.Stat(dbx, "PI_FORUM_USERS", int(res.group(2)), 0, 'Pocet uzivatelu na piratskem foru')
+        func.Stat(dbx, "PI_FORUM_USERS", int(res.group(2)), 0, 'Pocet uzivatelu na piratskem foru (scrappingem z https://forum.pirati.cz/index.php)')
 
 
 def message_and_exit(message=""):    
@@ -150,8 +151,16 @@ def main():
     if resp:
         func.Stat(dbx, "PP_APPROVED_COUNT", len(resp), 0, 'Pocet zadosti o proplaceni ve stavu Schvalena hospodarem, REST dotazem do piroplaceni')
         if len(resp):
-            resp = list(map( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp))
+            resp = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp)
             func.Stat(dbx, "PP_APPROVED_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Schvalena hospodarem, REST dotazem do piroplaceni')
+
+    # piroplaceni: pocet a prumerne stari (od data posledni upravy) zadosti ve stavu "Ke schvaleni hospodarem" (state=2)
+    resp = func.get_json('https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=2')
+    if resp:
+        func.Stat(dbx, "PP_TOAPPROVE_COUNT", len(resp), 0, 'Pocet zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
+        if len(resp):
+            resp = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp)
+            func.Stat(dbx, "PP_TOAPPROVE_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
 
     # pocet priznivcu, z fora
     stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', "Pocet registrovanych priznivcu")
@@ -164,7 +173,7 @@ def main():
         for account in fioAccounts:
             account = account.split("/")[0].strip()
             total += statFioBalance(account)
-        func.Stat(dbx, "BALANCE_FIO_TOTAL", total, 0, 'Celkovy stav vsech FIO transparentnich uctu')
+        func.Stat(dbx, "BALANCE_FIO_TOTAL", total, 0, 'Soucet zustatku na vsech FIO transparentnich uctech, sledovanych k danemu dni')
 
     # Pocty clenu v jednotlivych KS a celkem ve strane (prosty soucet dilcich)		
     total = 0
@@ -209,9 +218,13 @@ def main():
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
 
-    stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', 
-        "Pocet registrovanych priznivcu")
-
+    # piroplaceni: pocet a prumerne stari (od data posledni upravy) zadosti ve stavu "Ke schvaleni hospodarem" (state=2)
+    resp = func.get_json('https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=2')
+    if resp:
+        func.Stat(dbx, "PP_TOAPPROVE_COUNT", len(resp), 0, 'Pocet zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
+        if len(resp):
+            resp = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp)
+            func.Stat(dbx, "PP_TOAPPROVE_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
     pass
 
 
