@@ -107,6 +107,29 @@ def stat_forum():
         func.Stat(dbx, "PI_FORUM_USERS", int(res.group(2)), 0, 'Pocet uzivatelu na piratskem foru (scrappingem z https://forum.pirati.cz/index.php)')
 
 
+def redmine_issues(redmine_id, stat_id, odbor_name):
+    """ redmine: pocet otevrenych podani odboru nebo jine slozky 
+            redmine_id      identifikace odboru v Redmine (soucast url)
+            stat_id         identifikace odboru ve statistikach, soucast ID statistiky, napr pro 'AO' 
+                            to bude REDMINE_AO_OPENTICKETS_COUNT
+            odbor_name      jmeno odboru v dlouhem popisu statitstiky, napriklad 'Kancelar'
+    """
+    
+    base_url = 'https://redmine.pirati.cz/projects/%s/issues.json?tracker_id=12' % redmine_id
+    resp = func.get_json(base_url)
+    if resp:
+        total_count = resp['total_count']
+        func.Stat(dbx, "REDMINE_%s_OPENTICKETS_COUNT" % stat_id, total_count, 0, 'Pocet otevrenych podani slozky %s, REST dotazem do Redmine' % odbor_name)
+        if total_count:
+            offset, total_sum = 0, 0
+            while offset < total_count: 
+                resp = func.get_json(base_url + '&amp;limit=100&amp;offset=%s' % offset)
+                offset +=100
+                issue_ages = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['start_date'][:10], "%Y-%m-%d").date()).days, resp['issues'])
+                total_sum += sum(issue_ages)
+            func.Stat(dbx, "REDMINE_%s_OPENTICKETS_AGE" % stat_id, round(total_sum/total_count, 2), 0, 'Prumerne stari otevrenych podani slozky %s, REST dotazem do Redmine' % odbor_name)
+
+
 def message_and_exit(message=""):    
     if message:
         print(message)
@@ -165,6 +188,18 @@ def main():
     # pocet priznivcu, z fora
     stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', "Pocet registrovanych priznivcu")
 
+    # redmine: pocty a prumerna stari otevrenych podani pro jednotlive organizacni slozky
+    redmine_issues('ao', 'AO', 'Administrativni odbor')
+    redmine_issues('kancelar-strany', 'KANCL', 'Kancelar strany')
+    redmine_issues('kk', 'KK', 'Kontrolni komise')
+    redmine_issues('medialni-odbor', 'MO', 'Medialni odbor')
+    redmine_issues('po', 'PO', 'Personalni odbor')
+    redmine_issues('pravni-tym', 'PRAVNI', 'Pravni tym')
+    redmine_issues('rp', 'RP', 'Republikove predsednictvo')
+    redmine_issues('republikovy-vybor', 'RV', 'Republikovy vybor')
+    redmine_issues('to', 'TO', 'Technicky odbor')
+    redmine_issues('zo', 'ZO', 'Zahranicni odbor')
+
     # Zustatky na vsech transparentnich FIO uctech uvedenych na wiki FO
     content = func.getUrlContent("https://wiki.pirati.cz/fo/seznam_uctu")
     if content:
@@ -214,17 +249,25 @@ def main():
         else:
             print(id, "skipped: this account does not exist?")
         
+
+
+
         
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
 
-    # piroplaceni: pocet a prumerne stari (od data posledni upravy) zadosti ve stavu "Ke schvaleni hospodarem" (state=2)
-    resp = func.get_json('https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=2')
-    if resp:
-        func.Stat(dbx, "PP_TOAPPROVE_COUNT", len(resp), 0, 'Pocet zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
-        if len(resp):
-            resp = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp)
-            func.Stat(dbx, "PP_TOAPPROVE_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
+    # redmine: pocty a prumerna stari otevrenych podani pro jednotlive organizacni slozky
+    redmine_issues('ao', 'AO', 'Administrativni odbor')
+    redmine_issues('kancelar-strany', 'KANCL', 'Kancelar strany')
+    redmine_issues('kk', 'KK', 'Kontrolni komise')
+    redmine_issues('medialni-odbor', 'MO', 'Medialni odbor')
+    redmine_issues('po', 'PO', 'Personalni odbor')
+    redmine_issues('pravni-tym', 'PRAVNI', 'Pravni tym')
+    redmine_issues('rp', 'RP', 'Republikove predsednictvo')
+    redmine_issues('republikovy-vybor', 'RV', 'Republikovy vybor')
+    redmine_issues('to', 'TO', 'Technicky odbor')
+    redmine_issues('zo', 'ZO', 'Zahranicni odbor')
+
     pass
 
 

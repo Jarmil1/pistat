@@ -127,7 +127,7 @@ def Stat(dbx, statname, value, datediff, friendlyName=""):
 	"""Wrapper pro onelinery: Prida do statistiky jmenem statname hodnotu value pro datum datediff."""        
 	if value:
 		if friendlyName: 
-			print("%s=%s\t%s" % (statname, repr(value), friendlyName[:30]))
+			print("%s=%s\t%s" % (statname, repr(value), friendlyName[:36]))
 		st = clsMyStat(dbx,statname)
 		st.addStat(value, datediff, friendlyName)
 	else:
