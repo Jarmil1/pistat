@@ -110,6 +110,7 @@ class clsMyStat:
         """Prida jednu polozku statistiky pod udane datum. Pokud uz existuje, prepise ji
             datediff    vzdalenost data od dnesniho, napr. 1=vcera, 2=predevcirem atd
             method      textovy popis, jak byla statistika ziskana
+            value       hodnota, zaokrouhluje se na 2 desetinna mista
         """
         # princip ukladani metody: z popisu (parametr method) vytvor md5 hash a uloz ji k zaznamu v tabluce statistiky
         # samotny popis uloz do tabulky methods, s md5 jako klicem
@@ -117,13 +118,12 @@ class clsMyStat:
         md5 = hashlib.md5(method.encode('utf-8')).hexdigest()
         self.database.execute("INSERT IGNORE INTO methods (md5, description) VALUES('%s', '%s');" % (md5,method))
         
-        self.database.execute("INSERT IGNORE INTO %s (id,date_start,value, method) VALUES('%s',DATE_SUB(DATE(NOW()),INTERVAL %s DAY),%s,'%s');" % (self.tablename,self.stat_id,datediff,value,md5))
-        self.database.execute("UPDATE %s SET value=%d, method='%s' WHERE (id='%s') AND (date_start=DATE_SUB(DATE(NOW()),INTERVAL %s DAY));" % (self.tablename, float(value), md5, self.stat_id,datediff))
+        value = round(float(value), 2)
+        self.database.execute("INSERT IGNORE INTO %s (id, date_start, value, method) VALUES('%s',DATE_SUB(DATE(NOW()),INTERVAL %s DAY), %f, '%s');" % (self.tablename,self.stat_id,datediff, value,md5))
+        self.database.execute("UPDATE %s SET value=%f, method='%s' WHERE (id='%s') AND (date_start=DATE_SUB(DATE(NOW()),INTERVAL %s DAY));" % (self.tablename, value, md5, self.stat_id,datediff))
 
 
-
-
-def Stat(dbx,statname,value,datediff,friendlyName=""):
+def Stat(dbx, statname, value, datediff, friendlyName=""):
 	"""Wrapper pro onelinery: Prida do statistiky jmenem statname hodnotu value pro datum datediff."""        
 	if value:
 		if friendlyName: 
