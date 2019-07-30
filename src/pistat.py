@@ -86,7 +86,7 @@ def statNrOfMembers(id, url):
         except ValueError:
             count = 0
             
-        func.Stat(dbx, id, count, 0, 'Pocet clenu v %s' % id[11:])	
+        func.Stat(dbx, id, count, 0, 'Pocet clenu krajskeho sdruzeni v %s, scrappingem z piratskeho fora jako pocet clenu prislusne skupiny' % id[11:])	
     else:
         print("Error: Nemohu najit pocet clenu %s: %s " % (id,url))
         count = 0
@@ -162,12 +162,12 @@ def stat_from_regex( statid, url, regex, humandesc="" ):
 def main():
 
     # testovaci nahodna hodnota
-    func.Stat(dbx,"RANDOM",random.randint(1,1000),0,'Nahodna hodnota')	
+    func.Stat(dbx,"RANDOM",random.randint(1,1000),0,'Nahodna hodnota bez vyznamu, jako test funkcnosti statistik')	
 
     # Pocet lidi *se smlouvami* placenych piraty - jako pocet radku z payroll.csv, obsahujich 2 ciselne udaje oddelene carkou
     lines = func.getLines('https://raw.githubusercontent.com/pirati-byro/transparence/master/payroll.csv', arg('v'))
     if lines:
-        func.Stat(dbx, "PAYROLL_COUNT", len(func.grep(r'[0-9]+,[0-9]+',lines)), 0, 'Pocet lidi placenych piraty')	
+        func.Stat(dbx, "PAYROLL_COUNT", len(func.grep(r'[0-9]+,[0-9]+',lines)), 0, 'Pocet lidi placenych piraty, zrejme zastarale: jako pocet radku v souboru https://raw.githubusercontent.com/pirati-byro/transparence/master/payroll.csv')	
 
     # piroplaceni: pocet a prumerne stari (od data posledni upravy) zadosti ve stavu "Schvalena hospodarem" (state=3)
     resp = func.get_json('https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=3')
@@ -238,13 +238,13 @@ def main():
         content = func.getUrlContent(YOUTUBERS[id][0])
         m = re.findall(r'([\xa00-9]+)[ ]+odb.{1,1}ratel', content)
         value = int(re.sub(r'\xa0','',m[0])) if m else 0
-        func.Stat(dbx, id + '_SUBSCRIBERS', value, 0, id + '_SUBSCRIBERS')
+        func.Stat(dbx, id + '_SUBSCRIBERS', value, 0, "Odberatelu youtube kanalu, scrappingem verejne Youtube stranky")
         
         # shlednuti
         content = func.getUrlContent(YOUTUBERS[id][1])
         m = re.findall(r'<b>([\xa00-9]+)</b> zhl.{1,1}dnut', content)
         value = int(re.sub(r'\xa0','',m[0])) if m else 0
-        func.Stat(dbx, id + '_VIEWS', value, 0, id + '_VIEWS')
+        func.Stat(dbx, id + '_VIEWS', value, 0, "Pocet shlednuti youtube kanalu, scrappingem verejne Youtube stranky")
 
     # pocty followeru a tweetu ve vybranych twitter kanalech, konfiguraci nacti z druheho gitu
     twitter_accounts = func.filter_config(func.getLines('https://raw.githubusercontent.com/Jarmil1/pistat-conf/master/twitters'))[:200]
@@ -253,10 +253,10 @@ def main():
         if content:
             m = re.findall(r'data-count=([0-9]*)', content)
             if m:
-                func.Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, id + " Followers")   # hack, predpoklada toto cislo jako treti nalezene
-                func.Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, id + " Tweets")         # hack dtto    
+                func.Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, "Followers uzivatele, scrappingem verejneho profilu na Twitteru (treti nalezene cislo)")   # hack, predpoklada toto cislo jako treti nalezene
+                func.Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, "Tweets uzivatele, scrappingem verejneho profilu na Twitteru (prvni nalezene cislo)")         # hack dtto    
                 if len(m)>3:
-                    func.Stat(dbx, "TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, id + " Likes")          # hack dtto    
+                    func.Stat(dbx, "TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, "Likes uzivatele, scrappingem verejneho profilu na Twitteru (ctvrte nalezene cislo)")          # hack dtto    
                 else: 
                     print(id, "skipped: no likes found")
         else:
@@ -304,7 +304,7 @@ if __name__ == '__main__':
         except ValueError:
             message_and_exit("ERROR: expected number on stdio")
         if value:
-            func.Stat(dbx, arg('s'), value, 0, '')
+            func.Stat(dbx, arg('s'), value, 0, 'Neznamy puvod, importovano')
     elif arg('p'):
         stat = func.clsMyStat(dbx, arg('p'))
         stat.printLastValues()

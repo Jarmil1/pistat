@@ -336,12 +336,24 @@ def make_pages(dbx, dirname):
             make_graph( involved_stats, "%s/img/%s.png" % (dirname, statid), delta=False )
             make_graph( involved_deltas, "%s/img/%s.delta.png" % (dirname, statid), delta=True )
             
+            # metody ziskani dat
+            method_list = ""
+            for stat in involved_stats:
+                try:
+                    desc = involved_stats[stat][-1:][0][2]
+                except IndexError:
+                    desc = "Neznámá metoda"
+                method_list += "%s: %s<br>" % (stat, desc)
+            
             # html stranka
             statname = statnames[statid] if statid in statnames.keys() else statid
             min_date = min(lmap(stat_min_date, filter(lambda x: x, involved_stats.values())))   # rozsah dat
             max_date = max(lmap(stat_max_date, filter(lambda x: x, involved_stats.values())))
-            bottom_links = (html.a("%s.csv" % statid, "Zdrojová data ve formátu CSV") + html.br()) if singlestat else ""
-            bottom_links += html.a("index.htm", "Všechny statistiky")
+            bottom_links = html.h2("Metody získání dat") + \
+                html.p("Vypsána je vždy poslední použitá metoda, úplný seznam je v CSV souboru." + html.br()*2 + method_list) + \
+                ((html.a("%s.csv" % statid, "Zdrojová data ve formátu CSV") + html.br()) if singlestat else "") + \
+                html.a("index.htm", "Všechny statistiky")
+                
             try:
                 min_value = str(min(map( lambda x: x.min(), statInstances)))
             except TypeError:
