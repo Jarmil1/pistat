@@ -267,7 +267,7 @@ def make_pages(dbx, dirname):
                 continue
             found = re.search(r'PP_(.+)', stat)
             if found: 
-                add_stat_to_group( groups, 'Kancelář', stat)
+                add_stat_to_group( groups, 'Finanční tým', stat)
                 continue
             found = re.search(r'REDMINE_(.+)', stat)
             if found: 
