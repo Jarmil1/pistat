@@ -185,6 +185,19 @@ def main():
             resp = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp)
             func.Stat(dbx, "PP_TOAPPROVE_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
 
+    # piroplaceni: prumerne stari (od data posledni upravy) zadosti ve stavu "Ke schvaleni hospodarem" nebo "Rozpracovana"
+    def _counts( url ):
+        resp = func.get_json(url)
+        if resp and len(resp):
+            resp = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp)
+            return (sum(resp), len(resp))
+
+    sums = list(_counts( 'https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=1'))  # rozprac
+    x = _counts( 'https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=2')  # ke schvaleni hosp
+    sums[0] += x[0]
+    sums[1] += x[1]
+    func.Stat(dbx, "PP_UNAPPROVED_AGE", round(sums[0]/sums[1], 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem nebo Rozpracovana, pocitano od data posledni upravy. REST dotazem do piroplaceni')
+
     # pocet priznivcu, z fora
     stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', "Pocet registrovanych priznivcu")
 
@@ -256,17 +269,19 @@ def main():
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
 
-    # redmine: pocty a prumerna stari otevrenych podani pro jednotlive organizacni slozky
-    redmine_issues('ao', 'AO', 'Administrativni odbor')
-    redmine_issues('kancelar-strany', 'KANCL', 'Kancelar strany')
-    redmine_issues('kk', 'KK', 'Kontrolni komise')
-    redmine_issues('medialni-odbor', 'MO', 'Medialni odbor')
-    redmine_issues('po', 'PO', 'Personalni odbor')
-    redmine_issues('pravni-tym', 'PRAVNI', 'Pravni tym')
-    redmine_issues('rp', 'RP', 'Republikove predsednictvo')
-    redmine_issues('republikovy-vybor', 'RV', 'Republikovy vybor')
-    redmine_issues('to', 'TO', 'Technicky odbor')
-    redmine_issues('zo', 'ZO', 'Zahranicni odbor')
+    # piroplaceni: prumerne stari (od data posledni upravy) zadosti ve stavu "Ke schvaleni hospodarem" nebo "Rozpracovana"
+    def _counts( url ):
+        resp = func.get_json(url)
+        if resp and len(resp):
+            resp = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp)
+            return (sum(resp), len(resp))
+
+    sums = list(_counts( 'https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=1'))  # rozprac
+    x = _counts( 'https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=2')  # ke schvaleni hosp
+    sums[0] += x[0]
+    sums[1] += x[1]
+    func.Stat(dbx, "PP_UNAPPROVED_AGE", round(sums[0]/sums[1], 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem nebo Rozpracovana, pocitano od data posledni upravy. REST dotazem do piroplaceni')
+
 
     pass
 
