@@ -352,7 +352,7 @@ def make_pages(dbx, dirname):
             bottom_links = html.h2("Metody získání dat") + \
                 html.p("Vypsána je vždy poslední použitá metoda, úplný seznam je v CSV souboru." + html.br()*2 + method_list) + \
                 ((html.a("%s.csv" % statid, "Zdrojová data ve formátu CSV") + html.br()) if singlestat else "") + \
-                html.a("index.htm", "Všechny statistiky")
+                html.a("index.htm", "Všechny metriky")
                 
             try:
                 min_value = str(min(map( lambda x: x.min(), statInstances)))
