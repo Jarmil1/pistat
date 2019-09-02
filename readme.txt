@@ -44,18 +44,30 @@ Seznam sledovaných twitter účtů lze editovat v projektu
 https://github.com/Jarmil1/pistat-conf
 
 
-instalace a spuštění
+instalace a spuštění ve venvu
 =========================================================================
 
 1) stáhni projekt
 2) přejmenuj credentials_distrib.py na credentials.py
 3) doplň do credentials.py správné přihlašovací údaje
-4) doinstaluj tkinter, viz install.sh
-5) nainstaluj venv spustenim bash install.sh
-6) ve venv spusť pistat.py
-7) pro pravidelné vytváření statistik spouštěj pistat.py cronem. 
+
+
+spuštění ve venvu
+=========================================================================
+
+1) doinstaluj tkinter, viz install.sh
+2) nainstaluj venv spustenim bash install.sh
+3) ve venv spusť pistat.py
+4) pro pravidelné vytváření statistik spouštěj pistat.py cronem. 
    nevadí, pokud by se tento modul spouštěl paralelně z více míst
    (klíčem v db je datum, tekže nedojde k duplikování hodnot)
+
+
+sestavení a spuštění v Dockeru
+=========================================================================
+
+1) v kořenovém adresáři pistat spusť docker build --tag=pistat .
+2) spusť docker run pistat
 
 
 chceš se přidat?

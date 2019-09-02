@@ -10,11 +10,6 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
-
-# Define environment variable
-ENV NAME World
-
-# Run app.py when the container launches
-CMD ["python", "src/pistat.py"]
+# Run app.py when the container launches. 
+# Parametr -u je pro unbuffered output prikazu print()
+CMD ["python", "-u", "src/pistat.py"]
