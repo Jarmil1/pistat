@@ -108,7 +108,8 @@ def stat_forum():
 
 
 def redmine_issues(redmine_id, stat_id, odbor_name):
-    """ redmine: pocet otevrenych podani odboru nebo jine slozky 
+    """ redmine: pocet otevrenych podani odboru nebo jine slozky.
+        vytvori dva druhy metriky: prvni pro vsechna podani, druha pouze pro podani od 1.1.2019 (maji 'NEW' ve jmene metriky)
             redmine_id      identifikace odboru v Redmine (soucast url)
             stat_id         identifikace odboru ve statistikach, soucast ID statistiky, napr pro 'AO' 
                             to bude REDMINE_AO_OPENTICKETS_COUNT
@@ -118,16 +119,30 @@ def redmine_issues(redmine_id, stat_id, odbor_name):
     base_url = 'https://redmine.pirati.cz/projects/%s/issues.json?tracker_id=12' % redmine_id
     resp = func.get_json(base_url)
     if resp:
-        total_count = resp['total_count']
-        func.Stat(dbx, "REDMINE_%s_OPENTICKETS_COUNT" % stat_id, total_count, 0, 'Pocet otevrenych podani slozky %s, REST dotazem do Redmine' % odbor_name)
-        if total_count:
-            offset, total_sum = 0, 0
-            while offset < total_count: 
+        original_count = resp['total_count']
+        all_issues = []
+        if original_count:
+            total_count, offset, total_sum = 0, 0, 0
+            while offset < original_count: 
                 resp = func.get_json(base_url + '&amp;limit=100&amp;offset=%s' % offset)
                 offset +=100
-                issue_ages = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['start_date'][:10], "%Y-%m-%d").date()).days, resp['issues'])
-                total_sum += sum(issue_ages)
-            func.Stat(dbx, "REDMINE_%s_OPENTICKETS_AGE" % stat_id, round(total_sum/total_count, 2), 0, 'Prumerne stari otevrenych podani slozky %s, REST dotazem do Redmine' % odbor_name)
+                all_issues.extend(resp['issues'])
+
+        # ze ziskanych dat staci jen datumy    
+        all_issues = lmap( lambda x: datetime.datetime.strptime(x['start_date'][:10], "%Y-%m-%d").date(), all_issues)
+
+        new_issues = list(filter( lambda x: x >= datetime.date(2019,1,1), all_issues))
+
+        sum_all_issues_ages = sum(lmap( lambda x: (datetime.date.today() - x).days, all_issues))
+        sum_new_issues_ages = sum(lmap( lambda x: (datetime.date.today() - x).days, new_issues))
+        
+        func.Stat(dbx, "REDMINE_%s_OPENTICKETS_COUNT" % stat_id, len(all_issues), 0, 'Pocet otevrenych podani slozky %s, REST dotazem do Redmine' % odbor_name)
+        func.Stat(dbx, "REDMINE_%s_NEWOPENTICKETS_COUNT" % stat_id, len(new_issues), 0, 'Prumerne stari otevrenych podani (po 1.1.2019) slozky %s, REST dotazem do Redmine' % odbor_name)
+
+        if len(all_issues):
+            func.Stat(dbx, "REDMINE_%s_OPENTICKETS_AGE" % stat_id, round(sum_all_issues_ages/len(all_issues), 2), 0, 'Prumerne stari otevrenych podani slozky %s, REST dotazem do Redmine' % odbor_name)
+        if len(new_issues):
+            func.Stat(dbx, "REDMINE_%s_NEWOPENTICKETS_AGE" % stat_id, round(sum_new_issues_ages/len(new_issues), 2), 0, 'Prumerne stari otevrenych podani (po 1.1.2019) slozky %s, REST dotazem do Redmine' % odbor_name)
 
 
 def message_and_exit(message=""):    
@@ -269,19 +284,16 @@ def main():
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
 
-    # piroplaceni: prumerne stari (od data posledni upravy) zadosti ve stavu "Ke schvaleni hospodarem" nebo "Rozpracovana"
-    def _counts( url ):
-        resp = func.get_json(url)
-        if resp and len(resp):
-            resp = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp)
-            return (sum(resp), len(resp))
-
-    sums = list(_counts( 'https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=1'))  # rozprac
-    x = _counts( 'https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=2')  # ke schvaleni hosp
-    sums[0] += x[0]
-    sums[1] += x[1]
-    func.Stat(dbx, "PP_UNAPPROVED_AGE", round(sums[0]/sums[1], 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem nebo Rozpracovana, pocitano od data posledni upravy. REST dotazem do piroplaceni')
-
+    redmine_issues('ao', 'AO', 'Administrativni odbor')
+    redmine_issues('kancelar-strany', 'KANCL', 'Kancelar strany')
+    redmine_issues('kk', 'KK', 'Kontrolni komise')
+    redmine_issues('medialni-odbor', 'MO', 'Medialni odbor')
+    redmine_issues('po', 'PO', 'Personalni odbor')
+    redmine_issues('pravni-tym', 'PRAVNI', 'Pravni tym')
+    redmine_issues('rp', 'RP', 'Republikove predsednictvo')
+    redmine_issues('republikovy-vybor', 'RV', 'Republikovy vybor')
+    redmine_issues('to', 'TO', 'Technicky odbor')
+    redmine_issues('zo', 'ZO', 'Zahranicni odbor')
 
     pass
 

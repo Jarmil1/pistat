@@ -14,21 +14,41 @@ PP_TOAPPROVE_COUNT	Počet žádostí o proplacení ve stavu Ke schválení hospo
 PI_REGP_COUNT	Počet registrovaných příznivců
 REDMINE_AO_OPENTICKETS_AGE	AO: průměrné stáří otevřených podání
 REDMINE_AO_OPENTICKETS_COUNT	AO: počet otevřených podání
+REDMINE_AO_NEWOPENTICKETS_AGE	AO: průměrné stáří otevřených podání od roku 2019
+REDMINE_AO_NEWOPENTICKETS_COUNT	AO: počet otevřených podání od roku 2019
 REDMINE_KANCL_OPENTICKETS_AGE	Kancelář: průměrné stáří otevřených podání
 REDMINE_KANCL_OPENTICKETS_COUNT	Kancelář: počet otevřených podání
+REDMINE_KANCL_NEWOPENTICKETS_AGE	Kancelář: průměrné stáří otevřených podání od roku 2019
+REDMINE_KANCL_NEWOPENTICKETS_COUNT	Kancelář: počet otevřených podání od roku 2019
 REDMINE_KK_OPENTICKETS_AGE	Kontrolní komise: průměrné stáří otevřených podání 
 REDMINE_KK_OPENTICKETS_COUNT	Kontrolní komise: počet otevřených podání
+REDMINE_KK_NEWOPENTICKETS_AGE	Kontrolní komise: průměrné stáří otevřených podání od roku 2019
+REDMINE_KK_NEWOPENTICKETS_COUNT	Kontrolní komise: počet otevřených podání od roku 2019
 REDMINE_MO_OPENTICKETS_AGE	MO: průměrné stáří otevřených podání
 REDMINE_MO_OPENTICKETS_COUNT	MO: počet otevřených podání
+REDMINE_MO_NEWOPENTICKETS_AGE	MO: průměrné stáří otevřených podání od roku 2019
+REDMINE_MO_NEWOPENTICKETS_COUNT	MO: počet otevřených podání od roku 2019
 REDMINE_PO_OPENTICKETS_AGE	PO: průměrné stáří otevřených podání
 REDMINE_PO_OPENTICKETS_COUNT	PO: počet otevřených podání
+REDMINE_PO_NEWOPENTICKETS_AGE	PO: průměrné stáří otevřených podání od roku 2019
+REDMINE_PO_NEWOPENTICKETS_COUNT	PO: počet otevřených podání od roku 2019
 REDMINE_PRAVNI_OPENTICKETS_AGE	Právní: průměrné stáří otevřených podání
 REDMINE_PRAVNI_OPENTICKETS_COUNT	Právní: počet otevřených podání
+REDMINE_PRAVNI_NEWOPENTICKETS_AGE	Právní: průměrné stáří otevřených podání od roku 2019
+REDMINE_PRAVNI_NEWOPENTICKETS_COUNT	Právní: počet otevřených podání od roku 2019
 REDMINE_RP_OPENTICKETS_AGE	Republikové předsednictvo: průměrné stáří otevřených podání
 REDMINE_RP_OPENTICKETS_COUNT	Republikové předsednictvo: počet otevřených podání
+REDMINE_RP_NEWOPENTICKETS_AGE	Republikové předsednictvo: průměrné stáří otevřených podání od roku 2019
+REDMINE_RP_NEWOPENTICKETS_COUNT	Republikové předsednictvo: počet otevřených podání od roku 2019
 REDMINE_RV_OPENTICKETS_AGE	Republikový výbor: průměrné stáří otevřených podání
 REDMINE_RV_OPENTICKETS_COUNT	Republikový výbor: počet otevřených podání
+REDMINE_RV_NEWOPENTICKETS_AGE	Republikový výbor: průměrné stáří otevřených podání od roku 2019
+REDMINE_RV_NEWOPENTICKETS_COUNT	Republikový výbor: počet otevřených podání od roku 2019
 REDMINE_TO_OPENTICKETS_AGE	TO: průměrné stáří otevřených podání
 REDMINE_TO_OPENTICKETS_COUNT	TO: počet otevřených podání
+REDMINE_TO_NEWOPENTICKETS_AGE	TO: průměrné stáří otevřených podání od roku 2019
+REDMINE_TO_NEWOPENTICKETS_COUNT	TO: počet otevřených podání od roku 2019
 REDMINE_ZO_OPENTICKETS_AGE	ZO: průměrné stáří otevřených podání
 REDMINE_ZO_OPENTICKETS_COUNT	ZO: počet otevřených podání
+REDMINE_ZO_NEWOPENTICKETS_AGE	ZO: průměrné stáří otevřených podání od roku 2019
+REDMINE_ZO_NEWOPENTICKETS_COUNT	ZO: počet otevřených podání od roku 2019
