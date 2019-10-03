@@ -270,16 +270,9 @@ def main():
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
 
-    redmine_issues('ao', 'AO', 'Administrativni odbor')
-    redmine_issues('kancelar-strany', 'KANCL', 'Kancelar strany')
-    redmine_issues('kk', 'KK', 'Kontrolni komise')
-    redmine_issues('medialni-odbor', 'MO', 'Medialni odbor')
-    redmine_issues('po', 'PO', 'Personalni odbor')
-    redmine_issues('pravni-tym', 'PRAVNI', 'Pravni tym')
-    redmine_issues('rp', 'RP', 'Republikove predsednictvo')
-    redmine_issues('republikovy-vybor', 'RV', 'Republikovy vybor')
-    redmine_issues('to', 'TO', 'Technicky odbor')
-    redmine_issues('zo', 'ZO', 'Zahranicni odbor')
+    redminers = json.loads(func.getUrlContent('https://raw.githubusercontent.com/Jarmil1/pistat-conf/yt-rm-to-conf/redminers.json'))
+    for acc in redminers:
+        redmine_issues(acc['redmine_id'], acc['stat_id'], acc['department_name'])
 
     pass
 
