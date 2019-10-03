@@ -4,4 +4,7 @@
 /output/
 *.pyc
 todo.txt
-
+pistat-conf
+.idea
+dump.sql
+pistatEnv

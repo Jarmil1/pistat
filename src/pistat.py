@@ -22,6 +22,7 @@ import credentials
 import re
 import random
 import datetime
+import json
 from func import lmap
 
 
@@ -43,14 +44,6 @@ PIRATI_KS = {
     "PI_MEMBERS_JIHOCESKY": "https://forum.pirati.cz/memberlist.php?mode=group&g=40",
     "PI_MEMBERS_NEZARAZENI": "https://forum.pirati.cz/memberlist.php?mode=group&g=437"
     }
-
-# sledovane youtube kanaly
-YOUTUBERS = {
-    "YOUTUBE_PIRATI": [ "https://www.youtube.com/channel/UC_zxYLGrkmrYazYt0MzyVlA", "https://www.youtube.com/user/CeskaPiratskaStrana/about" ],
-    "YOUTUBE_TOP09": [ "https://www.youtube.com/user/topvidea", "https://www.youtube.com/user/topvidea/about" ], 
-    "YOUTUBE_ODS": [ "https://www.youtube.com/user/tvods", "https://www.youtube.com/user/tvods/about" ],
-    "YOUTUBE_ANO2011": [ "https://www.youtube.com/user/anobudelip", "https://www.youtube.com/user/anobudelip/about" ],
-}
 
 
 def arg(argumentName):
@@ -246,17 +239,17 @@ def main():
 
     # piratske forum
     stat_forum()
-    
+    youtubers = json.loads(func.getUrlContent('https://raw.githubusercontent.com/Jarmil1/pistat-conf/yt-rm-to-conf/youtubers.json'))
     # pocty odberatelu vybranych Youtube kanalu
-    for id in YOUTUBERS:
+    for id in youtubers:
         # odberatelu
-        content = func.getUrlContent(YOUTUBERS[id][0])
+        content = func.getUrlContent(youtubers[id][0])
         m = re.findall(r'([\xa00-9]+)[ ]+odb.{1,1}ratel', content)
         value = int(re.sub(r'\xa0','',m[0])) if m else 0
         func.Stat(dbx, id + '_SUBSCRIBERS', value, 0, "Odberatelu youtube kanalu, scrappingem verejne Youtube stranky")
         
         # shlednuti
-        content = func.getUrlContent(YOUTUBERS[id][1])
+        content = func.getUrlContent(youtubers[id][1])
         m = re.findall(r'<b>([\xa00-9]+)</b> zhl.{1,1}dnut', content)
         value = int(re.sub(r'\xa0','',m[0])) if m else 0
         func.Stat(dbx, id + '_VIEWS', value, 0, "Pocet shlednuti youtube kanalu, scrappingem verejne Youtube stranky")
@@ -298,7 +291,7 @@ def test():
     pass
 
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     dbx = func.clsMySql(credentials.FREEDB, verbose=arg('v'))
 
     if arg('t'):
