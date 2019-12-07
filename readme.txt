@@ -69,6 +69,13 @@ sestavení a spuštění v Dockeru
 1) v kořenovém adresáři pistat spusť docker build --tag=pistat .
 2) spusť docker run pistat
 
+Publikace dockeru na server:
+docker save pistat > ~/img.tar
+scp ~/img.tar $PIRTEST:~
+
+na serveru:
+cat ~/img.tar | docker load
+
 
 chceš se přidat?
 =========================================================================
