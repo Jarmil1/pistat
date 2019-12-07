@@ -22,6 +22,7 @@ import credentials
 import re
 import random
 import datetime
+import json
 from func import lmap
 
 
@@ -43,14 +44,6 @@ PIRATI_KS = {
     "PI_MEMBERS_JIHOCESKY": "https://forum.pirati.cz/memberlist.php?mode=group&g=40",
     "PI_MEMBERS_NEZARAZENI": "https://forum.pirati.cz/memberlist.php?mode=group&g=437"
     }
-
-# sledovane youtube kanaly
-YOUTUBERS = {
-    "YOUTUBE_PIRATI": [ "https://www.youtube.com/channel/UC_zxYLGrkmrYazYt0MzyVlA", "https://www.youtube.com/user/CeskaPiratskaStrana/about" ],
-    "YOUTUBE_TOP09": [ "https://www.youtube.com/user/topvidea", "https://www.youtube.com/user/topvidea/about" ], 
-    "YOUTUBE_ODS": [ "https://www.youtube.com/user/tvods", "https://www.youtube.com/user/tvods/about" ],
-    "YOUTUBE_ANO2011": [ "https://www.youtube.com/user/anobudelip", "https://www.youtube.com/user/anobudelip/about" ],
-}
 
 
 def arg(argumentName):
@@ -177,12 +170,12 @@ def stat_from_regex( statid, url, regex, humandesc="" ):
 def main():
 
     # testovaci nahodna hodnota
-    func.Stat(dbx,"RANDOM",random.randint(1,1000),0,'Nahodna hodnota bez vyznamu, jako test funkcnosti statistik')	
+    func.Stat(dbx,"RANDOM",random.randint(1,1000),0,'Nahodna hodnota bez vyznamu, jako test funkcnosti statistik')
 
     # Pocet lidi *se smlouvami* placenych piraty - jako pocet radku z payroll.csv, obsahujich 2 ciselne udaje oddelene carkou
     lines = func.getLines('https://raw.githubusercontent.com/pirati-byro/transparence/master/payroll.csv', arg('v'))
     if lines:
-        func.Stat(dbx, "PAYROLL_COUNT", len(func.grep(r'[0-9]+,[0-9]+',lines)), 0, 'Pocet lidi placenych piraty, zrejme zastarale: jako pocet radku v souboru https://raw.githubusercontent.com/pirati-byro/transparence/master/payroll.csv')	
+        func.Stat(dbx, "PAYROLL_COUNT", len(func.grep(r'[0-9]+,[0-9]+',lines)), 0, 'Pocet lidi placenych piraty, zrejme zastarale: jako pocet radku v souboru https://raw.githubusercontent.com/pirati-byro/transparence/master/payroll.csv')
 
     # piroplaceni: pocet a prumerne stari (od data posledni upravy) zadosti ve stavu "Schvalena hospodarem" (state=3)
     resp = func.get_json('https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=3')
@@ -217,16 +210,9 @@ def main():
     stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', "Pocet registrovanych priznivcu")
 
     # redmine: pocty a prumerna stari otevrenych podani pro jednotlive organizacni slozky
-    redmine_issues('ao', 'AO', 'Administrativni odbor')
-    redmine_issues('kancelar-strany', 'KANCL', 'Kancelar strany')
-    redmine_issues('kk', 'KK', 'Kontrolni komise')
-    redmine_issues('medialni-odbor', 'MO', 'Medialni odbor')
-    redmine_issues('po', 'PO', 'Personalni odbor')
-    redmine_issues('pravni-tym', 'PRAVNI', 'Pravni tym')
-    redmine_issues('rp', 'RP', 'Republikove predsednictvo')
-    redmine_issues('republikovy-vybor', 'RV', 'Republikovy vybor')
-    redmine_issues('to', 'TO', 'Technicky odbor')
-    redmine_issues('zo', 'ZO', 'Zahranicni odbor')
+    redminers = json.loads(func.getUrlContent('https://raw.githubusercontent.com/Jarmil1/pistat-conf/yt-rm-to-conf/redminers.json'))
+    for acc in redminers:
+        redmine_issues(acc['redmine_id'], acc['stat_id'], acc['department_name'])
 
     # Zustatky na vsech transparentnich FIO uctech uvedenych na wiki FO
     content = func.getUrlContent("https://wiki.pirati.cz/fo/seznam_uctu")
@@ -238,25 +224,25 @@ def main():
             total += statFioBalance(account)
         func.Stat(dbx, "BALANCE_FIO_TOTAL", total, 0, 'Soucet zustatku na vsech FIO transparentnich uctech, sledovanych k danemu dni')
 
-    # Pocty clenu v jednotlivych KS a celkem ve strane (prosty soucet dilcich)		
+    # Pocty clenu v jednotlivych KS a celkem ve strane (prosty soucet dilcich)
     total = 0
     for id in PIRATI_KS:
         total += statNrOfMembers(id, PIRATI_KS[id])
-    func.Stat(dbx, "PI_MEMBERS_TOTAL", total, 0, 'Pocet clenu CPS celkem, jako soucet poctu clenu v KS')			
+    func.Stat(dbx, "PI_MEMBERS_TOTAL", total, 0, 'Pocet clenu CPS celkem, jako soucet poctu clenu v KS')
 
     # piratske forum
     stat_forum()
-    
+    youtubers = json.loads(func.getUrlContent('https://raw.githubusercontent.com/Jarmil1/pistat-conf/yt-rm-to-conf/youtubers.json'))
     # pocty odberatelu vybranych Youtube kanalu
-    for id in YOUTUBERS:
+    for id in youtubers:
         # odberatelu
-        content = func.getUrlContent(YOUTUBERS[id][0])
+        content = func.getUrlContent(youtubers[id][0])
         m = re.findall(r'([\xa00-9]+)[ ]+odb.{1,1}ratel', content)
         value = int(re.sub(r'\xa0','',m[0])) if m else 0
         func.Stat(dbx, id + '_SUBSCRIBERS', value, 0, "Odberatelu youtube kanalu, scrappingem verejne Youtube stranky")
-        
+
         # shlednuti
-        content = func.getUrlContent(YOUTUBERS[id][1])
+        content = func.getUrlContent(youtubers[id][1])
         m = re.findall(r'<b>([\xa00-9]+)</b> zhl.{1,1}dnut', content)
         value = int(re.sub(r'\xa0','',m[0])) if m else 0
         func.Stat(dbx, id + '_VIEWS', value, 0, "Pocet shlednuti youtube kanalu, scrappingem verejne Youtube stranky")
@@ -269,10 +255,10 @@ def main():
             m = re.findall(r'data-count=([0-9]*)', content)
             if m:
                 func.Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, "Followers uzivatele, scrappingem verejneho profilu na Twitteru (treti nalezene cislo)")   # hack, predpoklada toto cislo jako treti nalezene
-                func.Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, "Tweets uzivatele, scrappingem verejneho profilu na Twitteru (prvni nalezene cislo)")         # hack dtto    
+                func.Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, "Tweets uzivatele, scrappingem verejneho profilu na Twitteru (prvni nalezene cislo)")         # hack dtto
                 if len(m)>3:
-                    func.Stat(dbx, "TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, "Likes uzivatele, scrappingem verejneho profilu na Twitteru (ctvrte nalezene cislo)")          # hack dtto    
-                else: 
+                    func.Stat(dbx, "TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, "Likes uzivatele, scrappingem verejneho profilu na Twitteru (ctvrte nalezene cislo)")          # hack dtto
+                else:
                     print(id, "skipped: no likes found")
         else:
             print(id, "skipped: this account does not exist?")
@@ -284,21 +270,14 @@ def main():
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
 
-    redmine_issues('ao', 'AO', 'Administrativni odbor')
-    redmine_issues('kancelar-strany', 'KANCL', 'Kancelar strany')
-    redmine_issues('kk', 'KK', 'Kontrolni komise')
-    redmine_issues('medialni-odbor', 'MO', 'Medialni odbor')
-    redmine_issues('po', 'PO', 'Personalni odbor')
-    redmine_issues('pravni-tym', 'PRAVNI', 'Pravni tym')
-    redmine_issues('rp', 'RP', 'Republikove predsednictvo')
-    redmine_issues('republikovy-vybor', 'RV', 'Republikovy vybor')
-    redmine_issues('to', 'TO', 'Technicky odbor')
-    redmine_issues('zo', 'ZO', 'Zahranicni odbor')
+    redminers = json.loads(func.getUrlContent('https://raw.githubusercontent.com/Jarmil1/pistat-conf/yt-rm-to-conf/redminers.json'))
+    for acc in redminers:
+        redmine_issues(acc['redmine_id'], acc['stat_id'], acc['department_name'])
 
     pass
 
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     dbx = func.clsMySql(credentials.FREEDB, verbose=arg('v'))
 
     if arg('t'):
