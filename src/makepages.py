@@ -6,6 +6,7 @@
         -oName  jmeno vystupniho adresare, napr -o../output
         -bName  provede dummy zalohu DB do adresare Name
         -sName  pouze statistiku Name
+        -c      misto vygenerovani stranek vypise vsechna zdrojova data do adresare -o
 """
 
 import matplotlib.pyplot as plt
@@ -22,7 +23,7 @@ import html
 LINE_COLORS = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
 
 def arg(argumentName):
-    return func.getArg(argumentName,"ho:b:s:")
+    return func.getArg(argumentName,"ho:b:s:c")
     
 
 def lmap(function, argument):
@@ -380,13 +381,18 @@ def make_pages(dbx, dirname):
                 func.writefile("stat_id;date;value;method;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, statid))    
 
 
+def ensure_dir(dirname):
+    """ Zajisti existenci prazdneho adresare dirname """
+    func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
+    shutil.rmtree(dirname)
+    func.makedir(dirname)
+
+
 def dummy_backup_db(dbx, dirname):
     """ Primitivni zaloha db do adresare dirname """
     print("(dummy) database backup to %s" % dirname)
 
-    func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
-    shutil.rmtree(dirname)
-    func.makedir(dirname)
+    ensure_dir(dirname)
     
     s = func.clsMyStat(dbx, '')
     for stat in s.getAllStats():
@@ -396,6 +402,20 @@ def dummy_backup_db(dbx, dirname):
         func.writefile("\n".join(r), "%s/%s" % (dirname, stat))
 
 
+def make_csv(dbx, dirname):
+    """ dumpuje vsechny statistiky jako CSV soubory do adresare dirname """
+
+    ensure_dir(dirname)
+    
+    s = func.clsMyStat(dbx, '')
+    for stat in s.getAllStats():
+        print(stat)
+        r = func.clsMyStat(dbx, stat).getLastValues(0)
+        #r = stat_object.getLastValues(0)
+        csv_rows = [ "%s;%s;%s;" % (stat, "{:%d.%m.%Y}".format(x[0]), x[1]) for x in r ]
+        func.writefile("stat_id;date;value;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, stat))    
+        
+
 if __name__=='__main__':
     if arg('h'):
         message_and_exit()
@@ -404,7 +424,10 @@ if __name__=='__main__':
     else:        
         dbx = func.clsMySql(credentials.FREEDB)
         if arg('o'):
-            make_pages(dbx, arg('o'))   
+            if arg('c'):
+                make_csv(dbx, arg('o'))
+            else:
+                make_pages(dbx, arg('o'))   
             print("Done"+' '*70)
         if arg('b'):
             dummy_backup_db(dbx, arg('b'))
