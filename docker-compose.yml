@@ -1,0 +1,46 @@
+version: '3.4'  
+services:  
+  
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+        MYSQL_ROOT_PASSWORD: dobre45
+        MYSQL_ROOT_HOST: 172.*.*.*
+    command:
+        - --innodb-buffer-pool-size=8M
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db2:/var/lib/mysql
+#      - ./etc/mysql:/etc/mysql
+
+#      - nalodeni_static:/static_nalodeni
+#    depends_on:
+#      - nalodeni
+
+#  adminer:
+#    image: adminer
+#    restart: always
+#    ports:
+#      - "8081:8080"
+#    volumes:
+#      - nalodeni_static:/static_nalodeni
+#    depends_on:
+#      - nalodeni
+
+
+#volumes:
+#  nalodeni_static:
+
+#CREATE USER 'username'@'localhost' IDENTIFIED BY 'password';
+#GRANT ALL PRIVILEGES ON *.* TO 'username'@'localhost' WITH GRANT OPTION;
+#CREATE USER 'username'@'%' IDENTIFIED BY 'password';
+#GRANT ALL PRIVILEGES ON *.* TO 'username'@'%' WITH GRANT OPTION;
+#FLUSH PRIVILEGES;
+
+# Inicializace mysql databaze
+docker exec -t 01e mysql -u root -pdobre45 -e "CREATE DATABASE metriky"
+docker exec -t 01e mysql -u root -pdobre45 -e "CREATE USER 'losos'@'%' IDENTIFIED BY '15446'"
+docker exec -t 01e mysql -u root -pdobre45 -e "GRANT ALL PRIVILEGES ON *.* TO 'losos'@'%' WITH GRANT OPTION"
+docker exec -t 01e mysql -u root -pdobre45 -e "FLUSH PRIVILEGES"
