@@ -9,3 +9,4 @@ pistat-conf
 dump.sql
 pistatEnv
 /db2/
+/tmp/

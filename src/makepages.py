@@ -422,7 +422,8 @@ if __name__=='__main__':
     elif not arg('o') and not arg('b'):        
         message_and_exit("error: missing argument. specify -o or -b")
     else:        
-        dbx = func.clsMySql(credentials.FREEDB)
+        #dbx = func.clsMySql(credentials.FREEDB)
+        dbx = func.PG(credentials.PGHOME, verbose=arg('v'))
         if arg('o'):
             if arg('c'):
                 make_csv(dbx, arg('o'))

@@ -270,15 +270,16 @@ def main():
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
 
-    redminers = json.loads(func.getUrlContent('https://raw.githubusercontent.com/Jarmil1/pistat-conf/yt-rm-to-conf/redminers.json'))
-    for acc in redminers:
-        redmine_issues(acc['redmine_id'], acc['stat_id'], acc['department_name'])
+    func.Stat(dbx,"RANDOM",random.randint(1,1000),0,'Nahodna hodnota bez vyznamu, jako test funkcnosti statistik')
 
     pass
 
 
 if __name__ == '__main__':
-    dbx = func.clsMySql(credentials.FREEDB, verbose=arg('v'))
+
+#    dbx = func.clsMySql(credentials.FREEDB, verbose=arg('v'))
+    dbx = func.PG(credentials.PGHOME, verbose=arg('v'))
+#    dbx = func.PG(credentials.PG_PIRTEST, verbose=arg('v'))
 
     if arg('t'):
         test()

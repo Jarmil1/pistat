@@ -8,6 +8,7 @@ import json
 import mysql.connector
 import os
 import hashlib
+import psycopg2
 from xml.etree import ElementTree as ET
 
 statList = []   # zde ukladej seznam vsech vygenerovanych statistik
@@ -66,6 +67,60 @@ class clsMySql:
 		if self.verbose: print("clsMySql:db connection closed")
 
 
+class PG:
+    """ wrapper Postgres databaze """
+
+    def __init__(self, credentials, verbose=False):
+        self.connected = False
+        self.verbose = verbose
+        try:
+            self.db_connection = psycopg2.connect(user=credentials['username'], 
+                                                password=credentials['password'], 
+                                                host=credentials['host'], 
+                                                database=credentials['databasename'])
+            self.cursor = self.db_connection.cursor()
+            self.connected = 1
+        except Exception as e:
+            print(e)
+            pass
+
+        if self.verbose: 
+            if self.connected:
+                print("Postgres:db %s connected" % (credentials['databasename']))
+            else:	
+                print("Postgres:db %s CONNECTION FAILED" % (credentials['databasename']))
+
+    def test_connection(self):
+        if not self.connected:
+            print("Postgres: error: not connected")
+            return False
+        return True
+
+    def execute(self,sql_query):
+        """Executes SQL query without string arguments, returns success"""
+        if not self.test_connection():
+            return False
+        if self.verbose: 
+            print("Performing query:" + sql_query)
+        try:
+            self.cursor.execute(sql_query)
+            return True
+        except mysql.connector.Error as err:
+            print("Postgres:error performing query: " + format(err))
+            return False
+
+    def fetchall(self,sql_query):
+        """executes SELECT SQL query and returns all data fetched"""
+        self.execute(sql_query)
+        return self.cursor.fetchall()
+        
+    def close(self):
+        """Cleanup, commit, close all open connections"""
+        self.db_connection.commit()
+        self.cursor.close()
+        self.db_connection.close()
+        if self.verbose: print("Postgres:db connection closed")
+
 
 class clsMyStat:
     ''' Trida pro ukladani statistik do databaze '''
@@ -116,11 +171,11 @@ class clsMyStat:
         # samotny popis uloz do tabulky methods, s md5 jako klicem
         method = method.replace("'",'*')    # HACK: hnus kvuli SQL dotazu, udelat slusne
         md5 = hashlib.md5(method.encode('utf-8')).hexdigest()
-        self.database.execute("INSERT IGNORE INTO methods (md5, description) VALUES('%s', '%s');" % (md5,method))
+        self.database.execute("INSERT INTO methods (md5, description) VALUES('%s', '%s') ON CONFLICT(md5) DO NOTHING;" % (md5,method))
         
         value = round(float(value), 2)
-        self.database.execute("INSERT IGNORE INTO %s (id, date_start, value, method) VALUES('%s',DATE_SUB(DATE(NOW()),INTERVAL %s DAY), %f, '%s');" % (self.tablename,self.stat_id,datediff, value,md5))
-        self.database.execute("UPDATE %s SET value=%f, method='%s' WHERE (id='%s') AND (date_start=DATE_SUB(DATE(NOW()),INTERVAL %s DAY));" % (self.tablename, value, md5, self.stat_id,datediff))
+        self.database.execute("INSERT INTO %s (id, date_start, value, method) VALUES('%s', (DATE(NOW()) + integer '%s'), %f, '%s') ON CONFLICT(id, date_start) DO NOTHING;" % (self.tablename,self.stat_id,datediff, value,md5))
+        self.database.execute("UPDATE %s SET value=%f, method='%s' WHERE (id='%s') AND (date_start=(DATE(NOW()) + integer '%s'));" % (self.tablename, value, md5, self.stat_id,datediff))
 
 
 def Stat(dbx, statname, value, datediff, friendlyName=""):
