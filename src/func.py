@@ -68,16 +68,23 @@ class clsMySql:
 
 
 class PG:
-    """ wrapper Postgres databaze """
+    """ wrapper Postgres databaze 
+        Prednostne se pripojuje k env promennym
+    """
 
     def __init__(self, credentials, verbose=False):
         self.connected = False
         self.verbose = verbose
+        
+        u = os.getenv('METRIKY_PSQL_USER', credentials['username'])
+        p = os.getenv('METRIKY_PSQL_PASSWORD', credentials['password'])
+        h = os.getenv('METRIKY_PSQL_HOST', credentials['host'])
+        d = os.getenv('METRIKY_PSQL_DBNAME', credentials['databasename'])
+        if self.verbose:
+            print("Postgres: connecting to %s@%s " % (d, h) )
+        
         try:
-            self.db_connection = psycopg2.connect(user=credentials['username'], 
-                                                password=credentials['password'], 
-                                                host=credentials['host'], 
-                                                database=credentials['databasename'])
+            self.db_connection = psycopg2.connect(user=u, password=p, host=h, database=d)
             self.cursor = self.db_connection.cursor()
             self.connected = 1
         except Exception as e:

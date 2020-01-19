@@ -44,12 +44,16 @@ Seznam sledovaných twitter účtů lze editovat v projektu
 https://github.com/Jarmil1/pistat-conf
 
 
-instalace a spuštění
+Instalace a spuštění
 =========================================================================
 
 1) stáhni projekt
 2) přejmenuj credentials_distrib.py na credentials.py
-3) doplň do credentials.py správné přihlašovací údaje
+3) doplň do credentials.py správné přihlašovací údaje nebo nastav prihlasovaci udaje do promennych prostredi:
+    export METRIKY_PSQL_PASSWORD=xxx
+    export METRIKY_PSQL_DBNAME=xxx
+    export METRIKY_PSQL_USER=xxx
+    export METRIKY_PSQL_HOST=xxx
 4) doinstaluj tkinter, viz install.sh
 5) nainstaluj venv spustenim bash install.sh
 6) ve venv spusť pistat.py

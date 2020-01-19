@@ -10,4 +10,4 @@ COPY . /metriky
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 # Run command when the container launches. Parametr -u je pro unbuffered output prikazu print()
-CMD ["python", "-u", "pistat.py"]
+CMD ["python", "-u", "pistat.py", "-rw"]

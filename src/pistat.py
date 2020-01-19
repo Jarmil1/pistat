@@ -15,6 +15,9 @@
                 Vstupem je celociselna hodnota na stdin. Priklad:
                     cat somefile | wc -l | pistat.py -sSTAT_SOMEFILE_LINES
         -pName  print. Vytiskni statistiku Name
+        -r      run. Bezi stale, s intervalem spousteni co 4 hodiny
+        -w      wait. Ceka 60 sec na zacatku pred prvnim pripojenim k databazi
+                Pouziti v docker-compose, nez naskoci db
 """
 
 import func
@@ -23,6 +26,7 @@ import re
 import random
 import datetime
 import json
+import time
 from func import lmap
 
 
@@ -47,7 +51,7 @@ PIRATI_KS = {
 
 
 def arg(argumentName):
-    return func.getArg(argumentName,"tvqs:p:ha")
+    return func.getArg(argumentName,"tvqs:p:harw")
 
 
 def statFioBalance(account):	
@@ -262,11 +266,8 @@ def main():
                     print(id, "skipped: no likes found")
         else:
             print(id, "skipped: this account does not exist?")
-        
 
 
-
-        
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
 
@@ -275,11 +276,45 @@ def test():
     pass
 
 
+def wait(sleep_length):
+    """ Ceka stanoveny pocet vterin, zobrazuje counter """
+    for sleepiter in range(sleep_length):
+        print("Sleeping for %s sec...  \r" % (sleep_length-sleepiter), end = '\r')
+        time.sleep(1)
+    print()
+
+
+def stable_run():
+    """ Bezi stale """
+    global dbx
+
+    # Nekonecna smycka, tempem 1x za minutu (+cas pro kod)
+    print("Starting 'daemon' (Ctrl+C to stop)")
+    iteration = 0
+    while True:
+
+        if iteration%240 == 0: # 1x za 4 hodiny
+            dbx = func.PG(credentials.PGHOME, verbose=arg('v'))
+            if arg('t'):
+                test()
+            else:
+                main()
+            dbx.close()
+
+        iteration = iteration + 1 if iteration<1000000 else 0   
+        wait(60)
+
+
 if __name__ == '__main__':
 
-#    dbx = func.clsMySql(credentials.FREEDB, verbose=arg('v'))
+    if arg('w'):
+        wait(60)
+
+    if arg('r'):
+        stable_run()
+        exit()
+
     dbx = func.PG(credentials.PGHOME, verbose=arg('v'))
-#    dbx = func.PG(credentials.PG_PIRTEST, verbose=arg('v'))
 
     if arg('t'):
         test()
@@ -300,6 +335,8 @@ if __name__ == '__main__':
     elif arg('p'):
         stat = func.clsMyStat(dbx, arg('p'))
         stat.printLastValues()
+    elif arg('r'):
+        stable_run()
     else:
         main()
 
@@ -309,4 +346,3 @@ if __name__ == '__main__':
             print("SELECT $__time(date_start), value as %s FROM statistics WHERE id='%s'" % (statid, statid))
             
     dbx.close()
-
