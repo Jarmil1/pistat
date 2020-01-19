@@ -16,7 +16,7 @@
                     cat somefile | wc -l | pistat.py -sSTAT_SOMEFILE_LINES
         -pName  print. Vytiskni statistiku Name
         -r      run. Bezi stale, s intervalem spousteni co 4 hodiny
-        -w      wait. Ceka 60 sec na zacatku pred prvnim pripojenim k databazi
+        -wTime  wait. Ceka Time sekund na zacatku pred prvnim pripojenim k databazi
                 Pouziti v docker-compose, nez naskoci db
 """
 
@@ -26,7 +26,6 @@ import re
 import random
 import datetime
 import json
-import time
 from func import lmap
 
 
@@ -276,14 +275,6 @@ def test():
     pass
 
 
-def wait(sleep_length):
-    """ Ceka stanoveny pocet vterin, zobrazuje counter """
-    for sleepiter in range(sleep_length):
-        print("Sleeping for %s sec...  \r" % (sleep_length-sleepiter), end = '\r')
-        time.sleep(1)
-    print()
-
-
 def stable_run():
     """ Bezi stale """
     global dbx
@@ -302,13 +293,13 @@ def stable_run():
             dbx.close()
 
         iteration = iteration + 1 if iteration<1000000 else 0   
-        wait(60)
+        func.wait(60)
 
 
 if __name__ == '__main__':
 
     if arg('w'):
-        wait(60)
+        func.wait(int(arg('w')))
 
     if arg('r'):
         stable_run()

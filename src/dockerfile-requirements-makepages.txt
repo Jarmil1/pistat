@@ -1,0 +1,5 @@
+requests
+xmltodict
+mysql-connector-python
+psycopg2
+matplotlib

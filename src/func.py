@@ -9,62 +9,10 @@ import mysql.connector
 import os
 import hashlib
 import psycopg2
+import time
 from xml.etree import ElementTree as ET
 
 statList = []   # zde ukladej seznam vsech vygenerovanych statistik
-
-class clsMySql:
-	""" wrapper mysql databaze """
-
-	def __init__(self, credentials, verbose=False):
-		self.connected = False
-		self.verbose = verbose
-		try:
-			self.db_connection = mysql.connector.connect(user=credentials['username'], 
-														 password=credentials['password'], 
-														 host=credentials['host'], 
-														 database=credentials['databasename'])
-			self.cursor = self.db_connection.cursor()
-			self.connected = 1
-		except:
-			pass
-
-		if self.verbose: 
-			if self.connected:
-				print("clsMySql:db %s connected" % (credentials['databasename']))
-			else:	
-				print("clsMySql:db %s CONNECTION FAILED" % (credentials['databasename']))
-
-	def test_connection(self):
-		if not self.connected:
-			print("clsMySql: error: not connected")
-			return False
-		return True
-
-	def execute(self,sql_query):
-		"""Executes SQL query without string arguments, returns success"""
-		if not self.test_connection():
-			return False
-		if self.verbose: 
-			print("Performing query:" + sql_query)
-		try:
-			self.cursor.execute(sql_query)
-			return True
-		except mysql.connector.Error as err:
-			print("clsMySql:error performing query: " + format(err))
-			return False
-
-	def fetchall(self,sql_query):
-		"""executes SELECT SQL query and returns all data fetched"""
-		self.execute(sql_query)
-		return self.cursor.fetchall()
-		
-	def close(self):
-		"""Cleanup, commit, close all open connections"""
-		self.db_connection.commit()
-		self.cursor.close()
-		self.db_connection.close()
-		if self.verbose: print("clsMySql:db connection closed")
 
 
 class PG:
@@ -299,3 +247,13 @@ def getconfig(filename):
 def lmap(function, argument):
     ''' pro zprehledneni casto pouzivaneho zapisu '''
     return list(map(function, argument))
+
+
+def wait(sleep_length):
+    """ Ceka stanoveny pocet vterin, zobrazuje counter """
+    for sleepiter in range(sleep_length):
+        print("Sleeping for %s sec...  \r" % (sleep_length-sleepiter), end = '\r')
+        time.sleep(1)
+    print()
+
+

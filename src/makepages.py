@@ -7,6 +7,9 @@
         -bName  provede dummy zalohu DB do adresare Name
         -sName  pouze statistiku Name
         -c      misto vygenerovani stranek vypise vsechna zdrojova data do adresare -o
+        -r      run. Bezi stale, s intervalem spousteni co 4 hodiny
+        -wTime  wait. Ceka Time sekund na zacatku pred prvnim pripojenim k databazi
+                Pouziti v docker-compose, nez naskoci db
 """
 
 import matplotlib.pyplot as plt
@@ -22,14 +25,11 @@ import html
 
 LINE_COLORS = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
 
+
 def arg(argumentName):
-    return func.getArg(argumentName,"ho:b:s:c")
+    return func.getArg(argumentName,"ho:b:s:crw")
     
 
-def lmap(function, argument):
-    return list(map(function, argument))
-    
-    
 def merge_dicts(x, y):
     """ Slouci dva slovniky do jednoho a vrati vysledek. """
     z = x.copy()   
@@ -50,7 +50,7 @@ def get_oldest_timeline(rowlist_in):
     rowlist = rowlist_in
     for id in rowlist:
         lastkey = id
-        datelist = lmap(lambda x: x[0], rowlist[id])
+        datelist = func.lmap(lambda x: x[0], rowlist[id])
         if datelist:
             oldest_in_row = min(datelist)
             if oldest_in_row<oldest_date:
@@ -87,7 +87,7 @@ class Stat():
             vysledek setrid podle data
         """
 
-        just_dates = lmap(lambda x: x[0], self.values)
+        just_dates = func.lmap(lambda x: x[0], self.values)
 
         startdate = min
         while startdate <= max:
@@ -110,7 +110,7 @@ def make_graph(rowlist, filename, delta):
     """    
 
     rowlist_count = len(rowlist)
-    minimal_value = min(lmap(lambda x: x[1], sum(list(rowlist.values()),[])))
+    minimal_value = min(func.lmap(lambda x: x[1], sum(list(rowlist.values()),[])))
 
     # datove rady mohou obsahovat chybejici hodnoty, diky nimz 
     # graf vypada zmatene. Je treba data normalizovat:
@@ -151,7 +151,7 @@ def make_graph(rowlist, filename, delta):
             X, Y = [], []
             for j in range(avg_length, len(actual_line)):
                 row = actual_line[j]
-                rows_for_avg = lmap(lambda x: x[1], actual_line[j-avg_length:j])
+                rows_for_avg = func.lmap(lambda x: x[1], actual_line[j-avg_length:j])
                 moving_avg = None if None in rows_for_avg else sum(rows_for_avg) / float(len(rows_for_avg))
                 X.append('{0:%d.%m.%Y}'.format(row[0]))
                 Y.append(moving_avg)
@@ -197,16 +197,25 @@ def make_pages(dbx, dirname):
             
     def stat_min_date(stat):
         ''' vrat nejmensi datum v datove rade statistiky stat = [ (datum, hodnota), (datum, hodnota) ...] '''
-        return min(lmap(lambda x: x[0],stat)) if stat else None
+        return min(func.lmap(lambda x: x[0],stat)) if stat else None
 
     def stat_max_date(stat):
         ''' obdobne vrat nejvetsi datum '''
-        return max(lmap(lambda x: x[0],stat)) if stat else None
+        return max(func.lmap(lambda x: x[0],stat)) if stat else None
 
-    func.makedir(dirname)   # hack kvuli filenotfounderror na dalsim radku
-    shutil.rmtree(dirname)
-    func.makedir(dirname)
-    func.makedir(dirname+"/img")
+    # priprava adresare
+    try:
+        shutil.rmtree(dirname)
+    except:
+        pass
+    try:
+        func.makedir(dirname)
+    except:
+        pass
+    try:
+        func.makedir(dirname+"/img")
+    except:
+        pass
 
     s = func.clsMyStat(dbx, '')
     stats = s.getAllStats()
@@ -228,8 +237,8 @@ def make_pages(dbx, dirname):
     add_stat_to_group( groups, 'Porovnání', stat_id)
             
     # 1) nacti ty z konfigurace, preved na hashtabulku
-    for line in func.getconfig('../config/graphs'):
-        lineparts = lmap(str.strip,line.split(' '))
+    for line in func.getconfig('config/graphs'):
+        lineparts = func.lmap(str.strip,line.split(' '))
         mixed_graphs[lineparts[0]] = lineparts[1:]
         statnames[lineparts[0]] = lineparts[0]
         add_stat_to_group( groups, 'Porovnání', lineparts[0])
@@ -277,7 +286,7 @@ def make_pages(dbx, dirname):
             add_stat_to_group( groups, 'Ostatní', stat)
                 
     # donacti jmena statistik z konfigurace
-    for line in func.getconfig('../config/statnames'):
+    for line in func.getconfig('config/statnames'):
         try:
             (a, b) = line.split('\t',2)
             statnames[a] = b
@@ -299,10 +308,10 @@ def make_pages(dbx, dirname):
         paragraph.sort()
         mybody += html.h2(groupname) + html.p(",\n".join(paragraph))
         
-    page = func.replace_all(func.readfile('../templates/index.htm'), 
+    page = func.replace_all(func.readfile('templates/index.htm'), 
         { '%body%': mybody, '%stat_date%': '{0:%d.%m.%Y %H:%M:%S}'.format(datetime.datetime.now()) } )
     func.writefile(page, "%s/index.htm" % dirname)    
-    shutil.copytree('../templates/assets', "%s/assets" % dirname)
+    shutil.copytree('templates/assets', "%s/assets" % dirname)
 
     # Vytvor vsechny kombinovane grafy, vynech statistiky s nejvyse jednou hodnotou
     for statid in mixed_graphs: 
@@ -329,7 +338,7 @@ def make_pages(dbx, dirname):
         
         singlestat = (len(involved_stats.values()) == 1)
             
-        if max(lmap(len,involved_stats.values())) > 0: # involved_stats musi obsahovat aspon 1 radu o >=1 hodnotach
+        if max(func.lmap(len,involved_stats.values())) > 0: # involved_stats musi obsahovat aspon 1 radu o >=1 hodnotach
 
             print("[%s/%s]: Creating %s                       \r" % (i, len(mixed_graphs), statid), end = '\r')
             
@@ -348,8 +357,8 @@ def make_pages(dbx, dirname):
             
             # html stranka
             statname = statnames[statid] if statid in statnames.keys() else statid
-            min_date = min(lmap(stat_min_date, filter(lambda x: x, involved_stats.values())))   # rozsah dat
-            max_date = max(lmap(stat_max_date, filter(lambda x: x, involved_stats.values())))
+            min_date = min(func.lmap(stat_min_date, filter(lambda x: x, involved_stats.values())))   # rozsah dat
+            max_date = max(func.lmap(stat_max_date, filter(lambda x: x, involved_stats.values())))
             bottom_links = html.h2("Metody získání dat") + \
                 html.p("Vypsána je vždy poslední použitá metoda, úplný seznam je v CSV souboru." + html.br()*2 + method_list) + \
                 ((html.a("%s.csv" % statid, "Zdrojová data ve formátu CSV") + html.br()) if singlestat else "") + \
@@ -370,9 +379,9 @@ def make_pages(dbx, dirname):
                   '%max%': max_value, '%min%': min_value
             }
             
-            page = func.replace_all(func.readfile('../templates/stat.htm'), merge_dicts(common_replaces, { '%stat_image%': "img/%s.png" % statid, '%stat_type%': "Absolutní hodnoty" } ) )
+            page = func.replace_all(func.readfile('templates/stat.htm'), merge_dicts(common_replaces, { '%stat_image%': "img/%s.png" % statid, '%stat_type%': "Absolutní hodnoty" } ) )
             func.writefile(page, "%s/%s.htm" % (dirname, statid))    
-            page = func.replace_all(func.readfile('../templates/stat.htm'), merge_dicts( common_replaces, { '%stat_image%': "img/%s.delta.png" % statid, '%stat_type%': "Denní přírůstky (delta)" } ) )
+            page = func.replace_all(func.readfile('templates/stat.htm'), merge_dicts( common_replaces, { '%stat_image%': "img/%s.delta.png" % statid, '%stat_type%': "Denní přírůstky (delta)" } ) )
             func.writefile(page, "%s/%s.delta.htm" % (dirname, statid))    
 
             # vytvor CSV soubor se zdrojovymi daty
@@ -414,23 +423,47 @@ def make_csv(dbx, dirname):
         #r = stat_object.getLastValues(0)
         csv_rows = [ "%s;%s;%s;" % (stat, "{:%d.%m.%Y}".format(x[0]), x[1]) for x in r ]
         func.writefile("stat_id;date;value;\n" + "\n".join(csv_rows), "%s/%s.csv" % (dirname, stat))    
-        
+
+
+def do_actions():
+    dbx = func.PG(credentials.PGHOME, verbose=arg('v'))
+    if arg('o'):
+        if arg('c'):
+            make_csv(dbx, arg('o'))
+        else:
+            make_pages(dbx, arg('o'))   
+        print("Done"+' '*70)
+    if arg('b'):
+        dummy_backup_db(dbx, arg('b'))
+    dbx.close()
+
+
+def stable_run():
+    """ Bezi stale """
+
+    # Nekonecna smycka, tempem 1x za minutu (+cas pro kod)
+    print("Starting 'daemon' (Ctrl+C to stop)")
+    iteration = 0
+    while True:
+
+        if iteration%1 == 240: # 1x za 4 hodiny 
+            do_actions()
+
+        iteration = iteration + 1 if iteration<1000000 else 0   
+        func.wait(60)
+
 
 if __name__=='__main__':
+
+    if arg('w'):
+        func.wait(int(arg('w')))
+
     if arg('h'):
         message_and_exit()
     elif not arg('o') and not arg('b'):        
         message_and_exit("error: missing argument. specify -o or -b")
+
+    if arg('r'):
+        stable_run()
     else:        
-        #dbx = func.clsMySql(credentials.FREEDB)
-        dbx = func.PG(credentials.PGHOME, verbose=arg('v'))
-        if arg('o'):
-            if arg('c'):
-                make_csv(dbx, arg('o'))
-            else:
-                make_pages(dbx, arg('o'))   
-            print("Done"+' '*70)
-        if arg('b'):
-            dummy_backup_db(dbx, arg('b'))
-        dbx.close()
-        
+        do_actions()
