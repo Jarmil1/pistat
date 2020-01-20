@@ -27,7 +27,7 @@ LINE_COLORS = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
 
 
 def arg(argumentName):
-    return func.getArg(argumentName,"ho:b:s:crw")
+    return func.getArg(argumentName,"ho:b:s:crw:")
     
 
 def merge_dicts(x, y):
@@ -202,7 +202,7 @@ def make_pages(dbx, dirname):
     def stat_max_date(stat):
         ''' obdobne vrat nejvetsi datum '''
         return max(func.lmap(lambda x: x[0],stat)) if stat else None
-
+        
     # priprava adresare
     try:
         shutil.rmtree(dirname)
@@ -216,10 +216,10 @@ def make_pages(dbx, dirname):
         func.makedir(dirname+"/img")
     except:
         pass
-
+        
     s = func.clsMyStat(dbx, '')
     stats = s.getAllStats()
-    
+
     i, statnames, statnames_index, groups = 0, {}, {}, {}
 
     # vytvor seznam vsech generovanych grafu:
@@ -446,7 +446,7 @@ def stable_run():
     iteration = 0
     while True:
 
-        if iteration%1 == 240: # 1x za 4 hodiny 
+        if iteration%240 == 0: # 1x za 4 hodiny 
             do_actions()
 
         iteration = iteration + 1 if iteration<1000000 else 0   

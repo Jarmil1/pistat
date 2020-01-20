@@ -12,3 +12,4 @@ RUN pip install --trusted-host pypi.python.org -r dockerfile-requirements-makepa
 # Run command when the container launches. Parametr -u je pro unbuffered output prikazu print()
 # stranky generuj do /metriky-output
 CMD ["python", "-u", "makepages.py", "-r", "-o/metriky-output", "-w600"]
+

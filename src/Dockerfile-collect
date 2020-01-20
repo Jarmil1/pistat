@@ -10,4 +10,5 @@ COPY . /metriky-collect
 RUN pip install --trusted-host pypi.python.org -r dockerfile-requirements-collect.txt
 
 # Run command when the container launches. Parametr -u je pro unbuffered output prikazu print()
-CMD ["python", "-u", "pistat.py", "-r", "-w60"]
+CMD ["python", "-u", "pistat.py", "-r", "-w20"]
+
