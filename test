@@ -1,0 +1,23 @@
+# Automaticke spusteni kontroly kodu: 
+# testy, code coverage, dead code via vulture, pyflakes
+
+source venv/bin/activate
+
+cd src
+
+#coverage run test_netspeed.py
+#coverage report -m
+
+echo
+echo "VULTURE:"
+vulture . # --exclude ping.py
+
+echo
+echo FLAKES
+pyflakes .
+
+# tohle je kolem stylu. Generuje spousty chyb 
+# flake8 . --max-line-length=120 --ignore W291,W293,W391
+# flake8 . --max-line-length=120 --ignore W291,W293,W391 | wc -l
+
+cd ..

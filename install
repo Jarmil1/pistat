@@ -4,6 +4,9 @@ source ./venv/bin/activate
 
 pip install matplotlib
 pip install mysql-connector-python
+pip install vulture
+pip install pyflakes
+pip install flake8
 
 # dependency: must be installed outside venv, i guess
 #sudo apt-get install python3-tk
