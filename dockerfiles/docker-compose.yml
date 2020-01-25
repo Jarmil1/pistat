@@ -1,0 +1,52 @@
+version: '3.4'  
+services:  
+  
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+        POSTGRES_DB: metriky
+        POSTGRES_USER: XXXXXXXX
+        POSTGRES_PASSWORD: XXXXXXXX
+
+  # adminer:
+    # image: adminer
+    # restart: always
+    # ports:
+      # - 8081:8080        
+    # depends_on:
+      # - db
+
+  collect:
+    image: metriky-collect:latest
+    restart: on-failure
+    depends_on:
+      - db
+    environment:
+        - METRIKY_PSQL_PASSWORD=XXXXXXXX
+        - METRIKY_PSQL_DBNAME=metriky
+        - METRIKY_PSQL_USER=XXXXXXXX
+        - METRIKY_PSQL_HOST=db
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8089:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./metriky-out:/metriky-out-folder
+
+  makepages:
+    image: metriky-makepages:latest
+    restart: on-failure
+    volumes:
+      - ./metriky-out:/metriky-output
+    depends_on:
+      - db
+    environment:
+      - METRIKY_PSQL_PASSWORD=XXXXXXXX
+      - METRIKY_PSQL_DBNAME=metriky
+      - METRIKY_PSQL_USER=XXXXXXXX
+      - METRIKY_PSQL_HOST=db

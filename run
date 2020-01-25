@@ -4,6 +4,6 @@ cd "$(dirname "$0")"
 
 source ./venv/bin/activate
 cd src
-python3 pistat.py -rt
+python3 pistat.py -rt -w8
 
 deactivate

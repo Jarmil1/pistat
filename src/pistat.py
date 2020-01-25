@@ -50,7 +50,7 @@ PIRATI_KS = {
 
 
 def arg(argumentName):
-    return func.getArg(argumentName,"tvqs:p:harw")
+    return func.getArg(argumentName,"tvqs:p:harw:")
 
 
 def statFioBalance(account):	
