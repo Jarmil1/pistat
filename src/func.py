@@ -9,12 +9,75 @@ import os
 import hashlib
 import time
 import requests
+import psycopg2
 from xml.etree import ElementTree as ET
 from datetime import datetime, timedelta
 
 import credentials
 
 statList = []   # zde ukladej seznam vsech vygenerovanych statistik
+
+
+class PG:
+    """ wrapper Postgres databaze
+        Prednostne se pripojuje k env promennym
+    """
+
+    def __init__(self, credentials, verbose=False):
+        self.connected = False
+        self.verbose = verbose
+
+        u = os.getenv('METRIKY_PSQL_USER', credentials['username'])
+        p = os.getenv('METRIKY_PSQL_PASSWORD', credentials['password'])
+        h = os.getenv('METRIKY_PSQL_HOST', credentials['host'])
+        d = os.getenv('METRIKY_PSQL_DBNAME', credentials['databasename'])
+        if self.verbose:
+            print("Postgres: connecting to %s@%s " % (d, h))
+
+        try:
+            self.db_connection = psycopg2.connect(user=u, password=p, host=h, database=d)
+            self.cursor = self.db_connection.cursor()
+            self.connected = 1
+        except Exception as e:
+            print(e)
+            pass
+
+        if self.verbose:
+            if self.connected:
+                print("Postgres:db %s connected" % (credentials['databasename']))
+            else:
+                print("Postgres:db %s CONNECTION FAILED" % (credentials['databasename']))
+
+    def test_connection(self):
+        if not self.connected:
+            print("Postgres: error: not connected")
+            return False
+        return True
+
+    def execute(self, sql_query):
+        """Executes SQL query without string arguments, returns success"""
+        if not self.test_connection():
+            return False
+        if self.verbose:
+            print("Performing query:" + sql_query)
+        try:
+            self.cursor.execute(sql_query)
+            return True
+        except Exception as err:
+            print("Postgres:error performing query: " + format(err))
+            return False
+
+    def fetchall(self, sql_query):
+        """executes SELECT SQL query and returns all data fetched"""
+        self.execute(sql_query)
+        return self.cursor.fetchall()
+
+    def close(self):
+        """Cleanup, commit, close all open connections"""
+        self.db_connection.commit()
+        self.cursor.close()
+        self.db_connection.close()
+        if self.verbose: print("Postgres:db connection closed")
 
 
 class Influx:

@@ -18,6 +18,7 @@
         -r      run. Bezi stale, s intervalem spousteni co 4 hodiny
         -wTime  wait. Ceka Time sekund na zacatku pred prvnim pripojenim k databazi
                 Pouziti v docker-compose, nez naskoci db
+        -c      Copy - zkopiruje stare statistiky z postgres do influxu. Dlouha operace
 """
 
 import func
@@ -50,7 +51,7 @@ PIRATI_KS = {
 
 
 def arg(argumentName):
-    return func.getArg(argumentName,"tvqs:p:harw:")
+    return func.getArg(argumentName,"tvqs:p:harw:c")
 
 
 def statFioBalance(account):	
@@ -297,6 +298,40 @@ def stable_run():
         func.wait(60)
 
 
+def copy_stats():
+
+    print("""Kopiruji statistiky z postgres do influx. Seznam zkopirovanych  
+    je v  ./copied-stats.json (pro navazani po prerusenem importu staci spustit znova)""")
+
+    dbx = func.PG(credentials.PG_PIRTEST)
+
+    tablename = "statistics"
+    r = dbx.fetchall("SELECT DISTINCT id FROM %s" % tablename)
+    stats = [x[0] for x in r]
+
+    filename = "copied-stats.json"
+    try:
+        with open(filename, "r") as f:
+            content = f.read()
+        copied_stats = json.loads(content)
+    except FileNotFoundError:
+        copied_stats = []
+
+    for stat in stats:
+        if stat not in copied_stats:
+            print(stat)
+            q = "SELECT DATE_PART('day', now() - date_start), value FROM %s WHERE (id='%s') ORDER BY date_start ASC" % (tablename, stat)
+            for ddiff, value in dbx.fetchall(q):
+                ddiff = int(ddiff)
+                func.Stat(stat, value, ddiff)
+
+            copied_stats.append(stat)
+            with open(filename, "w") as f:
+                f.write(json.dumps(copied_stats, indent=4))
+
+    dbx.close()
+
+
 if __name__ == '__main__':
 
     if arg('w'):
@@ -310,6 +345,8 @@ if __name__ == '__main__':
         test()
     elif arg('h'):
         message_and_exit()
+    elif arg('c'):
+        copy_stats()
     elif arg('a'):
         s = func.clsMyStat('')
         lst = s.getAllStats()
