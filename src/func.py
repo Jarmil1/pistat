@@ -2,88 +2,51 @@
 
 """ Funkce pro piratske statistiky """
 
-import random, re, getopt, sys
+import re, getopt, sys
 import urllib.request
 import json
-import mysql.connector
 import os
 import hashlib
-import psycopg2
 import time
+import requests
 from xml.etree import ElementTree as ET
+from datetime import datetime, timedelta
+
+import credentials
 
 statList = []   # zde ukladej seznam vsech vygenerovanych statistik
 
 
-class PG:
-    """ wrapper Postgres databaze 
-        Prednostne se pripojuje k env promennym
-    """
+class Influx:
 
-    def __init__(self, credentials, verbose=False):
-        self.connected = False
-        self.verbose = verbose
-        
-        u = os.getenv('METRIKY_PSQL_USER', credentials['username'])
-        p = os.getenv('METRIKY_PSQL_PASSWORD', credentials['password'])
-        h = os.getenv('METRIKY_PSQL_HOST', credentials['host'])
-        d = os.getenv('METRIKY_PSQL_DBNAME', credentials['databasename'])
-        if self.verbose:
-            print("Postgres: connecting to %s@%s " % (d, h) )
-        
-        try:
-            self.db_connection = psycopg2.connect(user=u, password=p, host=h, database=d)
-            self.cursor = self.db_connection.cursor()
-            self.connected = 1
-        except Exception as e:
-            print(e)
-            pass
+    def __init__(self, my_credentials):
+        self.url = my_credentials['host']
+        self.db = my_credentials['databasename']
+        self.user = my_credentials['username']
+        self.password = my_credentials['password']
 
-        if self.verbose: 
-            if self.connected:
-                print("Postgres:db %s connected" % (credentials['databasename']))
-            else:	
-                print("Postgres:db %s CONNECTION FAILED" % (credentials['databasename']))
+    def insert(self, serie_name, value, my_timestamp):
+        """ Vrazi data do time serie v influxu. Zaokrouhluje na dny.
+            Neprepisuje stara data. Vraci uspesnost
+        """
+        data = '%s value=%s %s000000000' % (serie_name, str(value), str(int(my_timestamp)))
+        r = requests.post(self.url + "/write?db=" + self.db, data.encode(), auth=(self.user, self.password))
+        return r.status_code in range(200, 300)
 
-    def test_connection(self):
-        if not self.connected:
-            print("Postgres: error: not connected")
-            return False
-        return True
-
-    def execute(self,sql_query):
-        """Executes SQL query without string arguments, returns success"""
-        if not self.test_connection():
-            return False
-        if self.verbose: 
-            print("Performing query:" + sql_query)
-        try:
-            self.cursor.execute(sql_query)
-            return True
-        except mysql.connector.Error as err:
-            print("Postgres:error performing query: " + format(err))
-            return False
-
-    def fetchall(self,sql_query):
-        """executes SELECT SQL query and returns all data fetched"""
-        self.execute(sql_query)
-        return self.cursor.fetchall()
-        
-    def close(self):
-        """Cleanup, commit, close all open connections"""
-        self.db_connection.commit()
-        self.cursor.close()
-        self.db_connection.close()
-        if self.verbose: print("Postgres:db connection closed")
+    def delete(self, serie_name):
+        """ Smaze vsechna data v serie_name. Vraci uspesnost """
+        data = 'q=DELETE FROM \"%s\"' % serie_name
+        r = requests.get(self.url + "/query?db=" + self.db, data.encode(), auth=(self.user, self.password))
+        return r.status_code in range(200, 300)
 
 
 class clsMyStat:
-    ''' Trida pro ukladani statistik do databaze '''
+    """ Trida pro ukladani statistik do databaze """
 
-    def __init__(self, database, stat_id, verbose=False):
+    def __init__(self, stat_id, verbose=False):
         global statList
         statList.append(stat_id)
-        self.database = database
+        self.database = Influx(credentials.INFLUX_TEST)
         self.stat_id = stat_id
         self.tablename = 'statistics'
         self.verbose = verbose
@@ -126,26 +89,26 @@ class clsMyStat:
         # samotny popis uloz do tabulky methods, s md5 jako klicem
         method = method.replace("'",'*')    # HACK: hnus kvuli SQL dotazu, udelat slusne
         md5 = hashlib.md5(method.encode('utf-8')).hexdigest()
-        self.database.execute("INSERT INTO methods (md5, description) VALUES('%s', '%s') ON CONFLICT(md5) DO NOTHING;" % (md5,method))
+        # self.database.execute("INSERT INTO methods (md5, description) VALUES('%s', '%s') ON CONFLICT(md5) DO NOTHING;" % (md5,method))
         
         value = round(float(value), 2)
-        self.database.execute("INSERT INTO %s (id, date_start, value, method) VALUES('%s', (DATE(NOW()) + integer '%s'), %f, '%s') ON CONFLICT(id, date_start) DO NOTHING;" % (self.tablename,self.stat_id,datediff, value,md5))
-        self.database.execute("UPDATE %s SET value=%f, method='%s' WHERE (id='%s') AND (date_start=(DATE(NOW()) + integer '%s'));" % (self.tablename, value, md5, self.stat_id,datediff))
+        mydate = datetime.now() - timedelta(days=datediff)
+        self.database.insert(self.stat_id, value, datetime.timestamp(mydate))
 
 
-def Stat(dbx, statname, value, datediff, friendlyName=""):
-	"""Wrapper pro onelinery: Prida do statistiky jmenem statname hodnotu value pro datum datediff."""        
-	if value:
-		if friendlyName: 
-			print("%s=%s\t%s" % (statname, repr(value), friendlyName[:36]))
-		st = clsMyStat(dbx,statname)
-		st.addStat(value, datediff, friendlyName)
-	else:
-		print("Skipping stat %s, value is None" % statname)
+def Stat(statname, value, datediff, method=""):
+    """ Wrapper pro onelinery: Prida do statistiky jmenem statname hodnotu value pro datum datediff. """
+    if value:
+        if method:
+            print("%s=%s\t%s" % (statname, repr(value), method[:36]))
+        st = clsMyStat(statname)
+        st.addStat(value, datediff, method)
+    else:
+        print("Skipping stat %s, value is None" % statname)
 
 
 def getUrlContent(url,verbose=False):
-    ''' Vrat obsah url jako retezec prevedeny na utf-8, nebo None pri neuspechu '''	
+    """ Vrat obsah url jako retezec prevedeny na utf-8, nebo None pri neuspechu """
     if verbose: print("Opening %s" % url)
     try:
         with urllib.request.urlopen(url) as f:

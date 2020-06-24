@@ -65,7 +65,7 @@ def statFioBalance(account):
         line = func.grep(regexp,lines)[5:6][0].strip()
         balance = float(re.sub(regexp,"",line).replace(",",".").replace(chr(160),"") )
         if balance>=0:
-            func.Stat(dbx, "BALANCE_%s" % account, balance, 0, "Stav uctu %s, scrappingem z %s" % (account, url))
+            func.Stat("BALANCE_%s" % account, balance, 0, "Stav uctu %s, scrappingem z %s" % (account, url))
             return balance
     return 0       
             
@@ -82,7 +82,7 @@ def statNrOfMembers(id, url):
         except ValueError:
             count = 0
             
-        func.Stat(dbx, id, count, 0, 'Pocet clenu krajskeho sdruzeni v %s, scrappingem z piratskeho fora jako pocet clenu prislusne skupiny' % id[11:])	
+        func.Stat(id, count, 0, 'Pocet clenu krajskeho sdruzeni v %s, scrappingem z piratskeho fora jako pocet clenu prislusne skupiny' % id[11:])
     else:
         print("Error: Nemohu najit pocet clenu %s: %s " % (id,url))
         count = 0
@@ -96,11 +96,11 @@ def stat_forum():
     
     res = re.search(r'Celkem p(.*?)<strong>(.*?)</strong> &bull', lines)
     if res and len(res.groups())>1:
-        func.Stat(dbx, "PI_FORUM_POSTS", int(res.group(2)), 0, 'Pocet prispevku na piratskem foru (scrappingem z https://forum.pirati.cz/index.php)')
+        func.Stat("PI_FORUM_POSTS", int(res.group(2)), 0, 'Pocet prispevku na piratskem foru (scrappingem z https://forum.pirati.cz/index.php)')
     
     res = re.search(r'Celkem zaregistrovan(.*?)<strong>(.*?)</strong> &bull', lines)
     if res and len(res.groups())>1:
-        func.Stat(dbx, "PI_FORUM_USERS", int(res.group(2)), 0, 'Pocet uzivatelu na piratskem foru (scrappingem z https://forum.pirati.cz/index.php)')
+        func.Stat("PI_FORUM_USERS", int(res.group(2)), 0, 'Pocet uzivatelu na piratskem foru (scrappingem z https://forum.pirati.cz/index.php)')
 
 
 def redmine_issues(redmine_id, stat_id, odbor_name):
@@ -124,21 +124,24 @@ def redmine_issues(redmine_id, stat_id, odbor_name):
                 offset +=100
                 all_issues.extend(resp['issues'])
 
-        # ze ziskanych dat staci jen datumy    
-        all_issues = lmap( lambda x: datetime.datetime.strptime(x['start_date'][:10], "%Y-%m-%d").date(), all_issues)
+        # ze ziskanych dat staci jen datumy
+        try:
+            all_issues = lmap( lambda x: datetime.datetime.strptime(x['start_date'][:10], "%Y-%m-%d").date(), all_issues)
+        except TypeError:
+            all_issues = []
 
         new_issues = list(filter( lambda x: x >= datetime.date(2019,1,1), all_issues))
 
         sum_all_issues_ages = sum(lmap( lambda x: (datetime.date.today() - x).days, all_issues))
         sum_new_issues_ages = sum(lmap( lambda x: (datetime.date.today() - x).days, new_issues))
         
-        func.Stat(dbx, "REDMINE_%s_OPENTICKETS_COUNT" % stat_id, len(all_issues), 0, 'Pocet otevrenych podani slozky %s, REST dotazem do Redmine' % odbor_name)
-        func.Stat(dbx, "REDMINE_%s_NEWOPENTICKETS_COUNT" % stat_id, len(new_issues), 0, 'Prumerne stari otevrenych podani (po 1.1.2019) slozky %s, REST dotazem do Redmine' % odbor_name)
+        func.Stat("REDMINE_%s_OPENTICKETS_COUNT" % stat_id, len(all_issues), 0, 'Pocet otevrenych podani slozky %s, REST dotazem do Redmine' % odbor_name)
+        func.Stat("REDMINE_%s_NEWOPENTICKETS_COUNT" % stat_id, len(new_issues), 0, 'Prumerne stari otevrenych podani (po 1.1.2019) slozky %s, REST dotazem do Redmine' % odbor_name)
 
         if len(all_issues):
-            func.Stat(dbx, "REDMINE_%s_OPENTICKETS_AGE" % stat_id, round(sum_all_issues_ages/len(all_issues), 2), 0, 'Prumerne stari otevrenych podani slozky %s, REST dotazem do Redmine' % odbor_name)
+            func.Stat("REDMINE_%s_OPENTICKETS_AGE" % stat_id, round(sum_all_issues_ages/len(all_issues), 2), 0, 'Prumerne stari otevrenych podani slozky %s, REST dotazem do Redmine' % odbor_name)
         if len(new_issues):
-            func.Stat(dbx, "REDMINE_%s_NEWOPENTICKETS_AGE" % stat_id, round(sum_new_issues_ages/len(new_issues), 2), 0, 'Prumerne stari otevrenych podani (po 1.1.2019) slozky %s, REST dotazem do Redmine' % odbor_name)
+            func.Stat("REDMINE_%s_NEWOPENTICKETS_AGE" % stat_id, round(sum_new_issues_ages/len(new_issues), 2), 0, 'Prumerne stari otevrenych podani (po 1.1.2019) slozky %s, REST dotazem do Redmine' % odbor_name)
 
 
 def message_and_exit(message=""):    
@@ -164,7 +167,7 @@ def stat_from_regex( statid, url, regex, humandesc="" ):
         except ValueError:
             print("ERROR Statistika %s: Hodnotu \"%s\" vracenou regexem nelze prelozit jako int." % (statid, res.group(1)))
             return 
-        func.Stat(dbx, statid, value, 0, humandesc)
+        func.Stat(statid, value, 0, humandesc)
             
     else:
         print("ERROR Statistika %s: Regex nenalezl zadnou hodnotu" % (statid))
@@ -173,28 +176,28 @@ def stat_from_regex( statid, url, regex, humandesc="" ):
 def main():
 
     # testovaci nahodna hodnota
-    func.Stat(dbx,"RANDOM",random.randint(1,1000),0,'Nahodna hodnota bez vyznamu, jako test funkcnosti statistik')
+    func.Stat("RANDOM",random.randint(1,1000),0,'Nahodna hodnota bez vyznamu, jako test funkcnosti statistik')
 
     # Pocet lidi *se smlouvami* placenych piraty - jako pocet radku z payroll.csv, obsahujich 2 ciselne udaje oddelene carkou
     lines = func.getLines('https://raw.githubusercontent.com/pirati-byro/transparence/master/payroll.csv', arg('v'))
     if lines:
-        func.Stat(dbx, "PAYROLL_COUNT", len(func.grep(r'[0-9]+,[0-9]+',lines)), 0, 'Pocet lidi placenych piraty, zrejme zastarale: jako pocet radku v souboru https://raw.githubusercontent.com/pirati-byro/transparence/master/payroll.csv')
+        func.Stat("PAYROLL_COUNT", len(func.grep(r'[0-9]+,[0-9]+',lines)), 0, 'Pocet lidi placenych piraty, zrejme zastarale: jako pocet radku v souboru https://raw.githubusercontent.com/pirati-byro/transparence/master/payroll.csv')
 
     # piroplaceni: pocet a prumerne stari (od data posledni upravy) zadosti ve stavu "Schvalena hospodarem" (state=3)
     resp = func.get_json('https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=3')
     if resp:
-        func.Stat(dbx, "PP_APPROVED_COUNT", len(resp), 0, 'Pocet zadosti o proplaceni ve stavu Schvalena hospodarem, REST dotazem do piroplaceni')
+        func.Stat("PP_APPROVED_COUNT", len(resp), 0, 'Pocet zadosti o proplaceni ve stavu Schvalena hospodarem, REST dotazem do piroplaceni')
         if len(resp):
             resp = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp)
-            func.Stat(dbx, "PP_APPROVED_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Schvalena hospodarem, REST dotazem do piroplaceni')
+            func.Stat("PP_APPROVED_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Schvalena hospodarem, REST dotazem do piroplaceni')
 
     # piroplaceni: pocet a prumerne stari (od data posledni upravy) zadosti ve stavu "Ke schvaleni hospodarem" (state=2)
     resp = func.get_json('https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=2')
     if resp:
-        func.Stat(dbx, "PP_TOAPPROVE_COUNT", len(resp), 0, 'Pocet zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
+        func.Stat("PP_TOAPPROVE_COUNT", len(resp), 0, 'Pocet zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
         if len(resp):
             resp = lmap( lambda x: (datetime.date.today() - datetime.datetime.strptime(x['updatedStamp'], "%d.%m.%Y, %H:%M").date()).days, resp)
-            func.Stat(dbx, "PP_TOAPPROVE_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
+            func.Stat("PP_TOAPPROVE_AGE", round(sum(resp)/len(resp), 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem, REST dotazem do piroplaceni')
 
     # piroplaceni: prumerne stari (od data posledni upravy) zadosti ve stavu "Ke schvaleni hospodarem" nebo "Rozpracovana"
     def _counts( url ):
@@ -207,7 +210,7 @@ def main():
     x = _counts( 'https://piroplaceni.pirati.cz/rest/realItem/?format=json&amp;state=2')  # ke schvaleni hosp
     sums[0] += x[0]
     sums[1] += x[1]
-    func.Stat(dbx, "PP_UNAPPROVED_AGE", round(sums[0]/sums[1], 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem nebo Rozpracovana, pocitano od data posledni upravy. REST dotazem do piroplaceni')
+    func.Stat("PP_UNAPPROVED_AGE", round(sums[0]/sums[1], 2), 0, 'Prumerne stari zadosti o proplaceni ve stavu Ke schvaleni hospodarem nebo Rozpracovana, pocitano od data posledni upravy. REST dotazem do piroplaceni')
 
     # pocet priznivcu, z fora
     stat_from_regex('PI_REGP_COUNT', 'https://forum.pirati.cz/memberlist.php?mode=group&g=74', r'<div class=\"pagination\">\s*(.*?)\s*už', "Pocet registrovanych priznivcu")
@@ -225,13 +228,13 @@ def main():
         for account in fioAccounts:
             account = account.split("/")[0].strip()
             total += statFioBalance(account)
-        func.Stat(dbx, "BALANCE_FIO_TOTAL", total, 0, 'Soucet zustatku na vsech FIO transparentnich uctech, sledovanych k danemu dni')
+        func.Stat("BALANCE_FIO_TOTAL", total, 0, 'Soucet zustatku na vsech FIO transparentnich uctech, sledovanych k danemu dni')
 
     # Pocty clenu v jednotlivych KS a celkem ve strane (prosty soucet dilcich)
     total = 0
     for id in PIRATI_KS:
         total += statNrOfMembers(id, PIRATI_KS[id])
-    func.Stat(dbx, "PI_MEMBERS_TOTAL", total, 0, 'Pocet clenu CPS celkem, jako soucet poctu clenu v KS')
+    func.Stat("PI_MEMBERS_TOTAL", total, 0, 'Pocet clenu CPS celkem, jako soucet poctu clenu v KS')
 
     # piratske forum
     stat_forum()
@@ -242,13 +245,13 @@ def main():
         content = func.getUrlContent(youtubers[id][0])
         m = re.findall(r'([\xa00-9]+)[ ]+odb.{1,1}ratel', content)
         value = int(re.sub(r'\xa0','',m[0])) if m else 0
-        func.Stat(dbx, id + '_SUBSCRIBERS', value, 0, "Odberatelu youtube kanalu, scrappingem verejne Youtube stranky")
+        func.Stat(id + '_SUBSCRIBERS', value, 0, "Odberatelu youtube kanalu, scrappingem verejne Youtube stranky")
 
         # shlednuti
         content = func.getUrlContent(youtubers[id][1])
         m = re.findall(r'<b>([\xa00-9]+)</b> zhl.{1,1}dnut', content)
         value = int(re.sub(r'\xa0','',m[0])) if m else 0
-        func.Stat(dbx, id + '_VIEWS', value, 0, "Pocet shlednuti youtube kanalu, scrappingem verejne Youtube stranky")
+        func.Stat(id + '_VIEWS', value, 0, "Pocet shlednuti youtube kanalu, scrappingem verejne Youtube stranky")
 
     # pocty followeru a tweetu ve vybranych twitter kanalech, konfiguraci nacti z druheho gitu
     twitter_accounts = func.filter_config(func.getLines('https://raw.githubusercontent.com/Jarmil1/pistat-conf/master/twitters'))[:200]
@@ -257,10 +260,10 @@ def main():
         if content:
             m = re.findall(r'data-count=([0-9]*)', content)
             if m:
-                func.Stat(dbx, "TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, "Followers uzivatele, scrappingem verejneho profilu na Twitteru (treti nalezene cislo)")   # hack, predpoklada toto cislo jako treti nalezene
-                func.Stat(dbx, "TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, "Tweets uzivatele, scrappingem verejneho profilu na Twitteru (prvni nalezene cislo)")         # hack dtto
+                func.Stat("TWITTER_%s_FOLLOWERS" % id.upper() , int(m[2]), 0, "Followers uzivatele, scrappingem verejneho profilu na Twitteru (treti nalezene cislo)")   # hack, predpoklada toto cislo jako treti nalezene
+                func.Stat("TWITTER_%s_TWEETS" % id.upper() , int(m[0]), 0, "Tweets uzivatele, scrappingem verejneho profilu na Twitteru (prvni nalezene cislo)")         # hack dtto
                 if len(m)>3:
-                    func.Stat(dbx, "TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, "Likes uzivatele, scrappingem verejneho profilu na Twitteru (ctvrte nalezene cislo)")          # hack dtto
+                    func.Stat("TWITTER_%s_LIKES" % id.upper() , int(m[3]), 0, "Likes uzivatele, scrappingem verejneho profilu na Twitteru (ctvrte nalezene cislo)")          # hack dtto
                 else:
                     print(id, "skipped: no likes found")
         else:
@@ -270,27 +273,25 @@ def main():
 def test():
     """ Zde se testuji nove statistiky, spousti se s parametrem -t """
 
-    func.Stat(dbx,"RANDOM",random.randint(1,1000),0,'Nahodna hodnota bez vyznamu, jako test funkcnosti statistik')
+    for ddiff in range(30):
+        func.Stat("RANDOM", random.randint(1,1000), ddiff, 'Nahodna hodnota bez vyznamu, jako test funkcnosti statistik')
 
     pass
 
 
 def stable_run():
     """ Bezi stale """
-    global dbx
 
     # Nekonecna smycka, tempem 1x za minutu (+cas pro kod)
     print("Starting 'daemon' (Ctrl+C to stop)")
     iteration = 0
     while True:
 
-        if iteration%240 == 0: # 1x za 4 hodiny
-            dbx = func.PG(credentials.PGHOME, verbose=arg('v'))
+        if iteration%240 == 0:  # 1x za 4 hodiny
             if arg('t'):
                 test()
             else:
                 main()
-            dbx.close()
 
         iteration = iteration + 1 if iteration<1000000 else 0   
         func.wait(60)
@@ -305,14 +306,12 @@ if __name__ == '__main__':
         stable_run()
         exit()
 
-    dbx = func.PG(credentials.PGHOME, verbose=arg('v'))
-
     if arg('t'):
         test()
     elif arg('h'):
         message_and_exit()
     elif arg('a'):
-        s = func.clsMyStat(dbx, '')
+        s = func.clsMyStat('')
         lst = s.getAllStats()
         for l in lst:
             print(l)
@@ -322,9 +321,9 @@ if __name__ == '__main__':
         except ValueError:
             message_and_exit("ERROR: expected number on stdio")
         if value:
-            func.Stat(dbx, arg('s'), value, 0, 'Neznamy puvod, importovano')
+            func.Stat(arg('s'), value, 0, 'Neznamy puvod, importovano')
     elif arg('p'):
-        stat = func.clsMyStat(dbx, arg('p'))
+        stat = func.clsMyStat(arg('p'))
         stat.printLastValues()
     elif arg('r'):
         stable_run()
@@ -336,4 +335,3 @@ if __name__ == '__main__':
         for statid in statList:
             print("SELECT $__time(date_start), value as %s FROM statistics WHERE id='%s'" % (statid, statid))
             
-    dbx.close()
