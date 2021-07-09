@@ -89,6 +89,26 @@ def statNrOfMembers(id, url):
 
     return count
 
+def statNrOfFemaleMembers(id, url):
+    """ Statistika poctu clenek a clenu krajskeho sdruzeni, zjistuje se z piratskeho fora,
+        jako pocet clenu s koncovkou "ova" ve jméně, vypsany na samostatnem radku "XX uzivatelu"
+    """
+    # nevím, jak dát podmínku, že načtu pouze uživatele s koncovkou "ova"
+    
+    lines = func.grep(r'[0-9]{1,5} uživatel', func.getLines(url))
+    if len(lines)==1:
+        lineparts = lines[0].strip().split()
+        try:
+            count = int(lineparts[0])
+        except ValueError:
+            count = 0
+
+        func.Stat(dbx, id, count, 0, 'Pocet clenek krajskeho sdruzeni v %s, scrappingem z piratskeho fora jako pocet clenek prislusne skupiny' % id[11:])
+    else:
+        print("Error: Nemohu najit pocet clenu %s: %s " % (id,url))
+        count = 0
+    
+    return count
     
 def stat_forum():
     """ Pocet prispevku a uzivatelu fora"""
